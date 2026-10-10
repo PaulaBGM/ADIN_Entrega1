@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 34480723bd5a55d4291ef047b651535c
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 369180
+  packageName: JPS4+ Lite 2D Grid Pathfinding
+  packageVersion: 1.0.3
+  assetPath: Assets/JPS4Pathfinding2D-Lite/Samples/Assets/kenney_micro-roguelike/Palette/KenneyRogue.prefab
+  uploadId: 969520

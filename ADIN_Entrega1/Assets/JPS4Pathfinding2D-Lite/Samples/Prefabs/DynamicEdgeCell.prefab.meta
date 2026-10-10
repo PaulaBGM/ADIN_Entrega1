@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 7b9887f407f049d4188f7d919d45796e
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 369180
+  packageName: JPS4+ Lite 2D Grid Pathfinding
+  packageVersion: 1.0.3
+  assetPath: Assets/JPS4Pathfinding2D-Lite/Samples/Prefabs/DynamicEdgeCell.prefab
+  uploadId: 969520

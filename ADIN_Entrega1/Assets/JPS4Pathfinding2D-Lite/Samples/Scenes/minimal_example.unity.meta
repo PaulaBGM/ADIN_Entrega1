@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 507545d8895b94a4cae2ca6f1ebfdb89
+DefaultImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 369180
+  packageName: JPS4+ Lite 2D Grid Pathfinding
+  packageVersion: 1.0.3
+  assetPath: Assets/JPS4Pathfinding2D-Lite/Samples/Scenes/minimal_example.unity
+  uploadId: 969520

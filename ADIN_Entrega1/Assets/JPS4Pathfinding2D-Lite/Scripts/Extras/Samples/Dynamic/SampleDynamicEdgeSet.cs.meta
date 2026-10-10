@@ -1,0 +1,10 @@
+﻿fileFormatVersion: 2
+guid: d2c07162bbe24b8f84ceef648221a372
+timeCreated: 1785898444
+AssetOrigin:
+  serializedVersion: 1
+  productId: 369180
+  packageName: JPS4+ Lite 2D Grid Pathfinding
+  packageVersion: 1.0.3
+  assetPath: Assets/JPS4Pathfinding2D-Lite/Scripts/Extras/Samples/Dynamic/SampleDynamicEdgeSet.cs
+  uploadId: 969520

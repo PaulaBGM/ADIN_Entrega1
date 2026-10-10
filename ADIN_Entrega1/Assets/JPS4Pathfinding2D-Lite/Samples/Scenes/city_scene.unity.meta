@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 522f06d68702f8a4b989e64049b8d613
+DefaultImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 369180
+  packageName: JPS4+ Lite 2D Grid Pathfinding
+  packageVersion: 1.0.3
+  assetPath: Assets/JPS4Pathfinding2D-Lite/Samples/Scenes/city_scene.unity
+  uploadId: 969520

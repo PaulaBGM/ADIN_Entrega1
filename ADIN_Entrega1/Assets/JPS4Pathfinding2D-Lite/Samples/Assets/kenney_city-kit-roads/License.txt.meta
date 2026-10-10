@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: e740590d81d0dd04880fb29c5bdf3ee2
+TextScriptImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 369180
+  packageName: JPS4+ Lite 2D Grid Pathfinding
+  packageVersion: 1.0.3
+  assetPath: Assets/JPS4Pathfinding2D-Lite/Samples/Assets/kenney_city-kit-roads/License.txt
+  uploadId: 969520

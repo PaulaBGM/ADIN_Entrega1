@@ -1,0 +1,10 @@
+﻿fileFormatVersion: 2
+guid: 4866d3dc1d1e43039229681b71ca8ae6
+timeCreated: 1766944769
+AssetOrigin:
+  serializedVersion: 1
+  productId: 369180
+  packageName: JPS4+ Lite 2D Grid Pathfinding
+  packageVersion: 1.0.3
+  assetPath: Assets/JPS4Pathfinding2D-Lite/Scripts/Extras/Samples/DemoPathingAgent.cs
+  uploadId: 969520

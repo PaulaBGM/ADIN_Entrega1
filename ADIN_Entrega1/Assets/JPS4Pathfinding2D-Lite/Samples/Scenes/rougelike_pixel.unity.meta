@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: b4c66767cef096940a30947384b4e62e
+DefaultImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 369180
+  packageName: JPS4+ Lite 2D Grid Pathfinding
+  packageVersion: 1.0.3
+  assetPath: Assets/JPS4Pathfinding2D-Lite/Samples/Scenes/rougelike_pixel.unity
+  uploadId: 969520

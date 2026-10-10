@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: a8b9100050e4f674893e8c79da3078fe
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 369180
+  packageName: JPS4+ Lite 2D Grid Pathfinding
+  packageVersion: 1.0.3
+  assetPath: Assets/JPS4Pathfinding2D-Lite/Samples/Assets/kenney_micro-roguelike/Palette/colored_tilemap_14.asset
+  uploadId: 969520

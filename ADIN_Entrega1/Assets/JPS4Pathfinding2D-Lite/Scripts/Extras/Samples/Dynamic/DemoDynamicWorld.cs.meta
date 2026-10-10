@@ -1,0 +1,10 @@
+﻿fileFormatVersion: 2
+guid: 6d54bb0c582c4bfcb6fb871d7993f0bd
+timeCreated: 1785888555
+AssetOrigin:
+  serializedVersion: 1
+  productId: 369180
+  packageName: JPS4+ Lite 2D Grid Pathfinding
+  packageVersion: 1.0.3
+  assetPath: Assets/JPS4Pathfinding2D-Lite/Scripts/Extras/Samples/Dynamic/DemoDynamicWorld.cs
+  uploadId: 969520

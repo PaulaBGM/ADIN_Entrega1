@@ -1,0 +1,10 @@
+﻿fileFormatVersion: 2
+guid: 7961ff7ec0f34327b914dbc1910a37d7
+timeCreated: 1785890861
+AssetOrigin:
+  serializedVersion: 1
+  productId: 369180
+  packageName: JPS4+ Lite 2D Grid Pathfinding
+  packageVersion: 1.0.3
+  assetPath: Assets/JPS4Pathfinding2D-Lite/Scripts/Extras/Samples/Dynamic/SampleDynamicObstacle.cs
+  uploadId: 969520

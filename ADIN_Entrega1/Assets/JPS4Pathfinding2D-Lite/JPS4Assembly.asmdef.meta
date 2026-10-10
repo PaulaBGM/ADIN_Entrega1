@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: cb059c1c3fac3bb449bffd90e6df9834
+AssemblyDefinitionImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 369180
+  packageName: JPS4+ Lite 2D Grid Pathfinding
+  packageVersion: 1.0.3
+  assetPath: Assets/JPS4Pathfinding2D-Lite/JPS4Assembly.asmdef
+  uploadId: 969520

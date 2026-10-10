@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: c15d67c57dcf3284b8498cada4af3f7f
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 369180
+  packageName: JPS4+ Lite 2D Grid Pathfinding
+  packageVersion: 1.0.3
+  assetPath: Assets/JPS4Pathfinding2D-Lite/Samples/Assets/kenney_city-kit-roads/Materials/M_Grass.mat
+  uploadId: 969520

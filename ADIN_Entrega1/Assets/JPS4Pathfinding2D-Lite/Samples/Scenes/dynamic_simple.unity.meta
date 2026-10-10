@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 9f9f0c3872b98ef47a15651e22f7efde
+DefaultImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 369180
+  packageName: JPS4+ Lite 2D Grid Pathfinding
+  packageVersion: 1.0.3
+  assetPath: Assets/JPS4Pathfinding2D-Lite/Samples/Scenes/dynamic_simple.unity
+  uploadId: 969520

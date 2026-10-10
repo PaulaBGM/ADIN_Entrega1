@@ -1,0 +1,10 @@
+﻿fileFormatVersion: 2
+guid: b7351da078e74de4a27e4e8444d024bb
+timeCreated: 1768766895
+AssetOrigin:
+  serializedVersion: 1
+  productId: 369180
+  packageName: JPS4+ Lite 2D Grid Pathfinding
+  packageVersion: 1.0.3
+  assetPath: Assets/JPS4Pathfinding2D-Lite/Scripts/Extras/Samples/Rogue/SyncedFollowAgent.cs
+  uploadId: 969520

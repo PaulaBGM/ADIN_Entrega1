@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 5749b856338ef2c408edbafdcec495c5
+TextScriptImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 369180
+  packageName: JPS4+ Lite 2D Grid Pathfinding
+  packageVersion: 1.0.3
+  assetPath: Assets/JPS4Pathfinding2D-Lite/Samples/Assets/kenney_car-kit/License.txt
+  uploadId: 969520

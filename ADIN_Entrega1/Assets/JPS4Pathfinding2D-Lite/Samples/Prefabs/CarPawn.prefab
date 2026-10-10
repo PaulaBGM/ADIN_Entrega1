@@ -1,0 +1,173 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &3707406481154537042
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: bfa79f674f3392146b648884245f57de, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: bfa79f674f3392146b648884245f57de, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: bfa79f674f3392146b648884245f57de, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: bfa79f674f3392146b648884245f57de, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: bfa79f674f3392146b648884245f57de, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: bfa79f674f3392146b648884245f57de, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: bfa79f674f3392146b648884245f57de, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: bfa79f674f3392146b648884245f57de, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: bfa79f674f3392146b648884245f57de, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: bfa79f674f3392146b648884245f57de, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: bfa79f674f3392146b648884245f57de, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: bfa79f674f3392146b648884245f57de, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: bfa79f674f3392146b648884245f57de, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -7948660828100032839, guid: bfa79f674f3392146b648884245f57de, type: 3}
+      propertyPath: m_Layer
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -4819223349682164798, guid: bfa79f674f3392146b648884245f57de, type: 3}
+      propertyPath: m_Layer
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -3664811705211809293, guid: bfa79f674f3392146b648884245f57de, type: 3}
+      propertyPath: m_Layer
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: bfa79f674f3392146b648884245f57de, type: 3}
+      propertyPath: m_Name
+      value: CarPawn
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: bfa79f674f3392146b648884245f57de, type: 3}
+      propertyPath: m_Layer
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: bfa79f674f3392146b648884245f57de, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2397621468118695034, guid: bfa79f674f3392146b648884245f57de, type: 3}
+      propertyPath: m_Layer
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7752030738778784939, guid: bfa79f674f3392146b648884245f57de, type: 3}
+      propertyPath: m_Layer
+      value: 2
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: bfa79f674f3392146b648884245f57de, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1923893233996166074}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: bfa79f674f3392146b648884245f57de, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8844903835658291322}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: bfa79f674f3392146b648884245f57de, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2198741538229275662}
+  m_SourcePrefab: {fileID: 100100000, guid: bfa79f674f3392146b648884245f57de, type: 3}
+--- !u!1 &4589787443414125315 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: bfa79f674f3392146b648884245f57de, type: 3}
+  m_PrefabInstance: {fileID: 3707406481154537042}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1923893233996166074
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4589787443414125315}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4866d3dc1d1e43039229681b71ca8ae6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::JPS4.PathfinderAI
+  updateRefresh: 0
+  grid: {fileID: 0}
+  target: {fileID: 0}
+--- !u!114 &8844903835658291322
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4589787443414125315}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a4ae7019d324564af5bbe9de74015be, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: GameAssembly::JPS4.JPS4.Debugging.JPSPathDebugVisualizer
+  grid: {fileID: 0}
+  stepIndex: 0
+  drawCurrent: 1
+  drawCameFrom: 1
+  drawPrunedDirs: 1
+  drawJumpPoints: 1
+  currentColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  cameFromColor: {r: 0, g: 1, b: 1, a: 1}
+  prunedColor: {r: 1, g: 0, b: 0, a: 1}
+  jumpColor: {r: 0, g: 1, b: 0, a: 1}
+--- !u!114 &2198741538229275662
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4589787443414125315}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6875fa4923d54df795ee88521fdeefb7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: GameAssembly::JPS4.PathfinderDiscreteMovementComponent
+  moveAnim:
+    Dur: 0.1
+    Curve: 10
+    Delay: 0.2
+  rotAnim:
+    Dur: 0.1
+    Curve: 17
+    Delay: 0.1
+  waitForRotation: 1
+  offsetRotation: {x: 0, y: 0, z: 0}
+  flipUp: 0

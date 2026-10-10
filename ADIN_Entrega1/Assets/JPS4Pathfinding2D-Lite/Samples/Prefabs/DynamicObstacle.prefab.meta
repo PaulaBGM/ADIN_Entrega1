@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 81df8a169e8b1b44b99e62421e066e3d
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 369180
+  packageName: JPS4+ Lite 2D Grid Pathfinding
+  packageVersion: 1.0.3
+  assetPath: Assets/JPS4Pathfinding2D-Lite/Samples/Prefabs/DynamicObstacle.prefab
+  uploadId: 969520

@@ -1,0 +1,10 @@
+﻿fileFormatVersion: 2
+guid: 4412eed6f2ea47dcbfb25f701729687c
+timeCreated: 1767370200
+AssetOrigin:
+  serializedVersion: 1
+  productId: 369180
+  packageName: JPS4+ Lite 2D Grid Pathfinding
+  packageVersion: 1.0.3
+  assetPath: Assets/JPS4Pathfinding2D-Lite/Scripts/Extras/MazeGenerator.cs
+  uploadId: 969520

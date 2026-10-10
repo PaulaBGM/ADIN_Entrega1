@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: a7c8e9f2d4b1a3c5e7f9b2d4a6c8e0f2
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 369180
+  packageName: JPS4+ Lite 2D Grid Pathfinding
+  packageVersion: 1.0.3
+  assetPath: Assets/JPS4Pathfinding2D-Lite/Scripts/Base/PathfindingDynamicEdgeGridBuilder.cs
+  uploadId: 969520

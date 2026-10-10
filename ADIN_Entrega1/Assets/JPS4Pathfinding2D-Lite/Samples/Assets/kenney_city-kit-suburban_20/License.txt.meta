@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: a12bba56f62890243b7411de8d6f9da2
+TextScriptImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 369180
+  packageName: JPS4+ Lite 2D Grid Pathfinding
+  packageVersion: 1.0.3
+  assetPath: Assets/JPS4Pathfinding2D-Lite/Samples/Assets/kenney_city-kit-suburban_20/License.txt
+  uploadId: 969520
