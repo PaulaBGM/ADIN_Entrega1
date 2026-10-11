@@ -124,7 +124,7 @@ GameObject:
   - component: {fileID: 5761957328483932097}
   - component: {fileID: 308477401482007727}
   m_Layer: 0
-  m_Name: LancerTroop
+  m_Name: PurpleLancerTroop
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

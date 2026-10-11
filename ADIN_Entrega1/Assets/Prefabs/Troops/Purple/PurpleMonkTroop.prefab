@@ -124,7 +124,7 @@ GameObject:
   - component: {fileID: 6740543545313002758}
   - component: {fileID: 5262868073048901647}
   m_Layer: 0
-  m_Name: MonkTroop
+  m_Name: PurpleMonkTroop
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &4372205635453903332
+--- !u!1 &587882833733114387
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,54 +8,54 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1893067272288302228}
-  - component: {fileID: 3017280963822318098}
-  - component: {fileID: 5939017069211247491}
-  - component: {fileID: 3464114517269633086}
-  - component: {fileID: 3513353635643965540}
+  - component: {fileID: 3175089740389788693}
+  - component: {fileID: 2678867166000516874}
+  - component: {fileID: 2894691459134621855}
+  - component: {fileID: 5767284475440874744}
+  - component: {fileID: 4987516142837827784}
   m_Layer: 0
-  m_Name: WarriorTroop
+  m_Name: PurpleArcherTroop
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &1893067272288302228
+--- !u!4 &3175089740389788693
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4372205635453903332}
+  m_GameObject: {fileID: 587882833733114387}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -3.07, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 8969055535107240566}
+  - {fileID: 1315235890072896730}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &3017280963822318098
+--- !u!114 &2678867166000516874
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4372205635453903332}
+  m_GameObject: {fileID: 587882833733114387}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d0a81f97154503a4a8c187de077a5824, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   maxHealth: 100
---- !u!114 &5939017069211247491
+--- !u!114 &2894691459134621855
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4372205635453903332}
+  m_GameObject: {fileID: 587882833733114387}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a1f14983589a6e247a3dd220ee06079c, type: 3}
@@ -64,31 +64,31 @@ MonoBehaviour:
   maxHealth: 0
   timeToDestroy: 2
   _eventManagerSo: {fileID: 11400000, guid: 5b95c78fca4da0b47a12da9ce1327f4e, type: 2}
---- !u!114 &3464114517269633086
+--- !u!114 &5767284475440874744
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4372205635453903332}
+  m_GameObject: {fileID: 587882833733114387}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4486bda36a6b493449e0d7ca975fcb3f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &3513353635643965540
+--- !u!114 &4987516142837827784
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4372205635453903332}
+  m_GameObject: {fileID: 587882833733114387}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9cd45da54e8713e47ad36459b582ff02, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!1 &8527485721395781961
+--- !u!1 &6440409333153337722
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -96,9 +96,9 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 8969055535107240566}
-  - component: {fileID: 9184393139193457384}
-  - component: {fileID: 1444846670061810257}
+  - component: {fileID: 1315235890072896730}
+  - component: {fileID: 679042691254095148}
+  - component: {fileID: 5229153013970314794}
   m_Layer: 0
   m_Name: Visual
   m_TagString: Untagged
@@ -106,28 +106,28 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &8969055535107240566
+--- !u!4 &1315235890072896730
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8527485721395781961}
+  m_GameObject: {fileID: 6440409333153337722}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1893067272288302228}
+  m_Father: {fileID: 3175089740389788693}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!212 &9184393139193457384
+--- !u!212 &679042691254095148
 SpriteRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8527485721395781961}
+  m_GameObject: {fileID: 6440409333153337722}
   m_Enabled: 1
   m_CastShadows: 0
   m_ReceiveShadows: 0
@@ -165,7 +165,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 7384290322352760091, guid: 0505cf46dcd784e559fa26016d355ac0, type: 3}
+  m_Sprite: {fileID: 7257567913506708742, guid: abc79d95ca2994e20b019ba42fccbcb9, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -176,17 +176,17 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!95 &1444846670061810257
+--- !u!95 &5229153013970314794
 Animator:
   serializedVersion: 7
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8527485721395781961}
+  m_GameObject: {fileID: 6440409333153337722}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 12285b2ad229e465ca21363a5ff750b0, type: 2}
+  m_Controller: {fileID: 9100000, guid: 9000152e1a8584e06b9325b9ec599654, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
