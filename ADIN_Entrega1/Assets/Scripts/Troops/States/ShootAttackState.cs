@@ -3,22 +3,17 @@ using UnityEngine;
 
 public class ShootAttackState : States<TroopController>, ITroopAttack
 {
-    public override void OnEnter()
-    {
-        Debug.Log("OnEnter ShootAttackState");
-    }
+    public override void OnEnter() { }
 
     public override void OnUpdate()
     {
+        // Pendiente: lógica de tropas a distancia
     }
 
-    public override void OnExit()
-    {
-        Debug.Log("OnExit ShootAttackState");
-    }
+    public override void OnExit() { }
 
     public void OnAttack(Transform target)
     {
-        //Ataca
+        // Pendiente: disparo
     }
 }

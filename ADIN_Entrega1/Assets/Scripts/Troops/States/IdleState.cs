@@ -5,7 +5,8 @@ public class IdleState : States<TroopController>
 {
     public override void OnEnter()
     {
-        Debug.Log("OnEnter IdleState");
+        if (_controller.Mover != null)
+            _controller.Mover.Stop();
     }
 
     public override void OnUpdate()
@@ -13,8 +14,5 @@ public class IdleState : States<TroopController>
         // La tropa permanece quieta.
     }
 
-    public override void OnExit()
-    {
-        Debug.Log("OnExit IdleState");
-    }
+    public override void OnExit() { }
 }

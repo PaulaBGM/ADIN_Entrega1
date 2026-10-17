@@ -12,17 +12,21 @@ PrefabInstance:
       propertyPath: m_Name
       value: BlueArcherTroop Variant
       objectReference: {fileID: 0}
+    - target: {fileID: 587882833733114387, guid: a1ef714beacdcd043a606f2cd6c802ab, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 679042691254095148, guid: a1ef714beacdcd043a606f2cd6c802ab, type: 3}
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 7257567913506708742, guid: 72c22f22ea5e4488390ba536cd5ab98d, type: 3}
     - target: {fileID: 3175089740389788693, guid: a1ef714beacdcd043a606f2cd6c802ab, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: -9.5
       objectReference: {fileID: 0}
     - target: {fileID: 3175089740389788693, guid: a1ef714beacdcd043a606f2cd6c802ab, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: -0.322
       objectReference: {fileID: 0}
     - target: {fileID: 3175089740389788693, guid: a1ef714beacdcd043a606f2cd6c802ab, type: 3}
       propertyPath: m_LocalPosition.z
@@ -56,10 +60,18 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4987516142837827784, guid: a1ef714beacdcd043a606f2cd6c802ab, type: 3}
+      propertyPath: enemyLayer.m_Bits
+      value: 64
+      objectReference: {fileID: 0}
     - target: {fileID: 5229153013970314794, guid: a1ef714beacdcd043a606f2cd6c802ab, type: 3}
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 9100000, guid: e69e54e6f75584bf382ddbe934f532b6, type: 2}
+    - target: {fileID: 6440409333153337722, guid: a1ef714beacdcd043a606f2cd6c802ab, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

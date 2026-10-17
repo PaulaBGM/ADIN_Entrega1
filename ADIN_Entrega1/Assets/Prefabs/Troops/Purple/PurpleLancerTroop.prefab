@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4411249377429990282}
   - component: {fileID: 4803968797624589461}
   - component: {fileID: 4356049749193198805}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Visual
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -123,7 +123,8 @@ GameObject:
   - component: {fileID: 7629761998984201075}
   - component: {fileID: 5761957328483932097}
   - component: {fileID: 308477401482007727}
-  m_Layer: 0
+  - component: {fileID: 4956658979668775876}
+  m_Layer: 6
   m_Name: PurpleLancerTroop
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -171,9 +172,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1f14983589a6e247a3dd220ee06079c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 0
   timeToDestroy: 2
   _eventManagerSo: {fileID: 11400000, guid: 5b95c78fca4da0b47a12da9ce1327f4e, type: 2}
+  defaultWaypoint: {fileID: 0}
 --- !u!114 &5761957328483932097
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -198,3 +199,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9cd45da54e8713e47ad36459b582ff02, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  detectionRange: 5
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 8
+  checkInterval: 0.25
+--- !u!114 &4956658979668775876
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3541513215254811848}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e37bd4fc484e02c4b929e0cd1da874a7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  grid: {fileID: 0}
+  speed: 2
+  nodeTolerance: 0.03
+  flipSpriteByDirection: 1

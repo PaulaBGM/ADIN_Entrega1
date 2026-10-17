@@ -14,11 +14,11 @@ PrefabInstance:
       objectReference: {fileID: 9100000, guid: 010817759ac3943d8a63d1698ab7d60e, type: 2}
     - target: {fileID: 3455747832585698828, guid: cdd7c9fd4fd27f54e835f9c734c20c82, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: -3.52
       objectReference: {fileID: 0}
     - target: {fileID: 3455747832585698828, guid: cdd7c9fd4fd27f54e835f9c734c20c82, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: -0.35800004
       objectReference: {fileID: 0}
     - target: {fileID: 3455747832585698828, guid: cdd7c9fd4fd27f54e835f9c734c20c82, type: 3}
       propertyPath: m_LocalPosition.z
@@ -52,9 +52,21 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5262868073048901647, guid: cdd7c9fd4fd27f54e835f9c734c20c82, type: 3}
+      propertyPath: enemyLayer.m_Bits
+      value: 64
+      objectReference: {fileID: 0}
+    - target: {fileID: 7897417680189991945, guid: cdd7c9fd4fd27f54e835f9c734c20c82, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 8451943837878138442, guid: cdd7c9fd4fd27f54e835f9c734c20c82, type: 3}
       propertyPath: m_Name
       value: BlueMonkTroop Variant
+      objectReference: {fileID: 0}
+    - target: {fileID: 8451943837878138442, guid: cdd7c9fd4fd27f54e835f9c734c20c82, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 8855080503512467196, guid: cdd7c9fd4fd27f54e835f9c734c20c82, type: 3}
       propertyPath: m_Sprite

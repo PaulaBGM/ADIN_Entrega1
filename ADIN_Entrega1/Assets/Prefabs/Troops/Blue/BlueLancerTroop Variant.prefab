@@ -8,9 +8,21 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 308477401482007727, guid: 3957f8fdc5fdda2469caa548334f721b, type: 3}
+      propertyPath: enemyLayer.m_Bits
+      value: 64
+      objectReference: {fileID: 0}
+    - target: {fileID: 806862080421351985, guid: 3957f8fdc5fdda2469caa548334f721b, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 3541513215254811848, guid: 3957f8fdc5fdda2469caa548334f721b, type: 3}
       propertyPath: m_Name
       value: BlueLancerTroop Variant
+      objectReference: {fileID: 0}
+    - target: {fileID: 3541513215254811848, guid: 3957f8fdc5fdda2469caa548334f721b, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 4356049749193198805, guid: 3957f8fdc5fdda2469caa548334f721b, type: 3}
       propertyPath: m_Controller
@@ -22,11 +34,11 @@ PrefabInstance:
       objectReference: {fileID: -594197781322936934, guid: 2307ce0d618cb4ea2be2cb2a4148cbde, type: 3}
     - target: {fileID: 6171200663179574743, guid: 3957f8fdc5fdda2469caa548334f721b, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: -3.44
       objectReference: {fileID: 0}
     - target: {fileID: 6171200663179574743, guid: 3957f8fdc5fdda2469caa548334f721b, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: 3.729
       objectReference: {fileID: 0}
     - target: {fileID: 6171200663179574743, guid: 3957f8fdc5fdda2469caa548334f721b, type: 3}
       propertyPath: m_LocalPosition.z

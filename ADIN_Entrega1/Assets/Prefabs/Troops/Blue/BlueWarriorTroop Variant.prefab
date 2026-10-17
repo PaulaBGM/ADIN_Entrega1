@@ -14,11 +14,11 @@ PrefabInstance:
       objectReference: {fileID: 9100000, guid: aa1112b337436413a9e3f0f07d8475c2, type: 2}
     - target: {fileID: 1893067272288302228, guid: 4dbf778510810cf4bba2a5eb6a573a7d, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: -3.48
       objectReference: {fileID: 0}
     - target: {fileID: 1893067272288302228, guid: 4dbf778510810cf4bba2a5eb6a573a7d, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: -3.27
       objectReference: {fileID: 0}
     - target: {fileID: 1893067272288302228, guid: 4dbf778510810cf4bba2a5eb6a573a7d, type: 3}
       propertyPath: m_LocalPosition.z
@@ -52,9 +52,21 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3513353635643965540, guid: 4dbf778510810cf4bba2a5eb6a573a7d, type: 3}
+      propertyPath: enemyLayer.m_Bits
+      value: 64
+      objectReference: {fileID: 0}
     - target: {fileID: 4372205635453903332, guid: 4dbf778510810cf4bba2a5eb6a573a7d, type: 3}
       propertyPath: m_Name
       value: BlueWarriorTroop Variant
+      objectReference: {fileID: 0}
+    - target: {fileID: 4372205635453903332, guid: 4dbf778510810cf4bba2a5eb6a573a7d, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8527485721395781961, guid: 4dbf778510810cf4bba2a5eb6a573a7d, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 9184393139193457384, guid: 4dbf778510810cf4bba2a5eb6a573a7d, type: 3}
       propertyPath: m_Sprite

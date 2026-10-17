@@ -13,7 +13,8 @@ GameObject:
   - component: {fileID: 2894691459134621855}
   - component: {fileID: 5767284475440874744}
   - component: {fileID: 4987516142837827784}
-  m_Layer: 0
+  - component: {fileID: 418177276219806917}
+  m_Layer: 6
   m_Name: PurpleArcherTroop
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -61,9 +62,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1f14983589a6e247a3dd220ee06079c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 0
   timeToDestroy: 2
   _eventManagerSo: {fileID: 11400000, guid: 5b95c78fca4da0b47a12da9ce1327f4e, type: 2}
+  defaultWaypoint: {fileID: 0}
 --- !u!114 &5767284475440874744
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -88,6 +89,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9cd45da54e8713e47ad36459b582ff02, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  detectionRange: 5
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 8
+  checkInterval: 0.25
+--- !u!114 &418177276219806917
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 587882833733114387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e37bd4fc484e02c4b929e0cd1da874a7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  grid: {fileID: 0}
+  speed: 2
+  nodeTolerance: 0.03
+  flipSpriteByDirection: 1
 --- !u!1 &6440409333153337722
 GameObject:
   m_ObjectHideFlags: 0
@@ -99,7 +121,7 @@ GameObject:
   - component: {fileID: 1315235890072896730}
   - component: {fileID: 679042691254095148}
   - component: {fileID: 5229153013970314794}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Visual
   m_TagString: Untagged
   m_Icon: {fileID: 0}

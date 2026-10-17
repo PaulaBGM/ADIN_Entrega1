@@ -2,5 +2,5 @@ using UnityEngine;
 
 public interface ITroopAttack
 {
-    void OnAttack (Transform target);
+    void OnAttack(Transform target);
 }

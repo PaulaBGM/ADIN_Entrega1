@@ -1,16 +1,15 @@
-using System;
 using UnityEngine;
 
-public class FSMController <T>: MonoBehaviour where T : FSMController<T> //Le indica a la clase que T debe heredar de FSMController<T>
+public class FSMController<T> : MonoBehaviour where T : FSMController<T> // T debe heredar de FSMController<T>
 {
     private States<T> currentState;
 
-    private void Update()
+    public States<T> CurrentState => currentState;
+
+    protected virtual void Update()
     {
-        if (currentState)
-        {
+        if (currentState != null)
             currentState.OnUpdate();
-        }
     }
 
     public void SetState(States<T> newState)
@@ -22,19 +21,14 @@ public class FSMController <T>: MonoBehaviour where T : FSMController<T> //Le in
         }
 
         if (currentState == newState)
-        {
-            Debug.Log($"[{name}] Ya está en {newState.GetType().Name}.");
             return;
-        }
 
-        Debug.Log($"[{name}] Cambio de estado: " + $"{(currentState != null ? currentState.GetType().Name : "Ninguno")} " + $"-> {newState.GetType().Name}");
-        
-        if (currentState)
-        {
+        Debug.Log($"[{name}] Cambio de estado: {(currentState != null ? currentState.GetType().Name : "Ninguno")} -> {newState.GetType().Name}");
+
+        if (currentState != null)
             currentState.OnExit();
-            
-            currentState = newState;
-            currentState.OnEnter();
-        }
+
+        currentState = newState;
+        currentState.OnEnter();
     }
 }
