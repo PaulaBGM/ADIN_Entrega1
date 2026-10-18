@@ -15,7 +15,11 @@ using UnityEngine.Tilemaps;
 ///
 /// Uso: poner en un GameObject de la escena, asignar el PathfindingGridBuilder y los Tilemaps.
 /// El PathfindingGridBuilder debe tener Collision Type = Custom (esta clase le da la rejilla).
+///
+/// Además expone una API de celdas (TryWorldToCell, CellToWorld, IsWalkable) que usa
+/// el TroopPlacementManager para colocar tropas.
 /// </summary>
+/// 
 [DefaultExecutionOrder(-200)] // Antes que las tropas, que piden caminos en su Start
 public class TerrainGridBaker : MonoBehaviour
 {
@@ -96,6 +100,53 @@ public class TerrainGridBaker : MonoBehaviour
     {
         Compute();
     }
+
+    // ------------------------------------------------------------------
+    //  API de celdas (la usa el TroopPlacementManager)
+    // ------------------------------------------------------------------
+
+    /// <summary>True cuando la rejilla ya está calculada.</summary>
+    public bool IsReady => walkable != null;
+
+    /// <summary>Lado de una celda en unidades de mundo.</summary>
+    public float CellSize => cellSize;
+
+    /// <summary>Esquina inferior izquierda de la rejilla en el mundo.</summary>
+    public Vector2 Origin => origin;
+
+    /// <summary>Tamaño de la rejilla en celdas.</summary>
+    public Vector2Int GridSize => new Vector2Int(size.x, size.y);
+
+    /// <summary>Celda que contiene un punto del mundo. False si cae fuera de la rejilla.</summary>
+    public bool TryWorldToCell(Vector3 world, out Vector2Int cell)
+    {
+        cell = default;
+        if (walkable == null) return false;
+
+        int x = Mathf.FloorToInt((world.x - origin.x) / cellSize);
+        int y = Mathf.FloorToInt((world.y - origin.y) / cellSize);
+        if (x < 0 || y < 0 || x >= size.x || y >= size.y) return false;
+
+        cell = new Vector2Int(x, y);
+        return true;
+    }
+
+    /// <summary>Centro de una celda en el mundo (z = 0).</summary>
+    public Vector3 CellToWorld(Vector2Int cell)
+    {
+        Vector2 c = CellCenter(cell.x, cell.y);
+        return new Vector3(c.x, c.y, 0f);
+    }
+
+    /// <summary>True si la celda existe y es caminable (no agua, árbol, borde de desnivel...).</summary>
+    public bool IsWalkable(Vector2Int cell)
+    {
+        if (walkable == null) return false;
+        if (cell.x < 0 || cell.y < 0 || cell.x >= size.x || cell.y >= size.y) return false;
+        return walkable[cell.y * size.x + cell.x];
+    }
+
+    // ------------------------------------------------------------------
 
     private bool Compute()
     {

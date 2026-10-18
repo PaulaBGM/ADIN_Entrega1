@@ -53,6 +53,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3513353635643965540, guid: 4dbf778510810cf4bba2a5eb6a573a7d, type: 3}
+      propertyPath: detectionRange
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 3513353635643965540, guid: 4dbf778510810cf4bba2a5eb6a573a7d, type: 3}
       propertyPath: enemyLayer.m_Bits
       value: 64
       objectReference: {fileID: 0}
@@ -63,6 +67,10 @@ PrefabInstance:
     - target: {fileID: 4372205635453903332, guid: 4dbf778510810cf4bba2a5eb6a573a7d, type: 3}
       propertyPath: m_Layer
       value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 4372205635453903332, guid: 4dbf778510810cf4bba2a5eb6a573a7d, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8527485721395781961, guid: 4dbf778510810cf4bba2a5eb6a573a7d, type: 3}
       propertyPath: m_Layer
@@ -75,5 +83,29 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 4372205635453903332, guid: 4dbf778510810cf4bba2a5eb6a573a7d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5922712352372455011}
   m_SourcePrefab: {fileID: 100100000, guid: 4dbf778510810cf4bba2a5eb6a573a7d, type: 3}
+--- !u!1 &7660324047007121912 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4372205635453903332, guid: 4dbf778510810cf4bba2a5eb6a573a7d, type: 3}
+  m_PrefabInstance: {fileID: 6261061204648583196}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5922712352372455011
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7660324047007121912}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f1dfd09251069644a32ff9f237689cb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  attackRange: 0.8
+  attackDamage: 10
+  attackCooldown: 1
+  repathInterval: 0.3
