@@ -17,9 +17,21 @@ PrefabInstance:
       value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 679042691254095148, guid: a1ef714beacdcd043a606f2cd6c802ab, type: 3}
+      propertyPath: m_FlipX
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 679042691254095148, guid: a1ef714beacdcd043a606f2cd6c802ab, type: 3}
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 7257567913506708742, guid: 72c22f22ea5e4488390ba536cd5ab98d, type: 3}
+    - target: {fileID: 1716255719983321157, guid: a1ef714beacdcd043a606f2cd6c802ab, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.57
+      objectReference: {fileID: 0}
+    - target: {fileID: 2807447823629062880, guid: a1ef714beacdcd043a606f2cd6c802ab, type: 3}
+      propertyPath: enemyLayer.m_Bits
+      value: 64
+      objectReference: {fileID: 0}
     - target: {fileID: 3175089740389788693, guid: a1ef714beacdcd043a606f2cd6c802ab, type: 3}
       propertyPath: m_LocalPosition.x
       value: -9.5
@@ -71,6 +83,10 @@ PrefabInstance:
     - target: {fileID: 6440409333153337722, guid: a1ef714beacdcd043a606f2cd6c802ab, type: 3}
       propertyPath: m_Layer
       value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8367090485006472611, guid: a1ef714beacdcd043a606f2cd6c802ab, type: 3}
+      propertyPath: enemyLayer.m_Bits
+      value: 64
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

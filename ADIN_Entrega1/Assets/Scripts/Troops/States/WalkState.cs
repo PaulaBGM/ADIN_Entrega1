@@ -24,7 +24,7 @@ public class WalkState : States<TroopController>
             Debug.LogWarning($"[{name}] No tiene Waypoint asignado.");
             return;
         }
-
+        
         bool ok = _controller.Mover.MoveTo(_controller.Waypoint.position);
         if (!ok)
         {
@@ -32,16 +32,22 @@ public class WalkState : States<TroopController>
                              $"{_controller.Waypoint.position}. Revisa que el grid esté construido y que " +
                              $"la tropa y el waypoint estén sobre celdas transitables.");
         }
+        else
+        {
+            _controller.SetMovementSpeed(_controller.Stats.movementSpeed);
+        }
     }
 
+    
     public override void OnUpdate()
     {
-        // 1) ¿Hay algún enemigo? -> atacar
+        // 1) Buscar enemigos y atacarlos.
         if (Time.time >= nextCheck)
         {
             nextCheck = Time.time + checkInterval;
 
             Transform closest = FindClosestEnemy();
+
             if (closest != null)
             {
                 _controller.Target = closest;
@@ -50,10 +56,20 @@ public class WalkState : States<TroopController>
             }
         }
 
-        // 2) Ha llegado al waypoint y no está cazando: se queda quieta.
-        //    Si caza, se queda aquí esperando a que aparezca algún enemigo.
+        // 2) Si ha llegado a la torre enemiga, atacarla.
+        if (_controller.Waypoint != null && !_controller.Mover.IsMoving)
+        {
+            _controller.Target = _controller.Waypoint;
+            _controller.SetState(_controller.AttackState);
+            return;
+        }
+
+        // 3) Si no está cazando y ha terminado de moverse,
+        // pasar al estado Idle.
         if (!huntEnemiesAnywhere && !_controller.Mover.IsMoving && _controller.IdleState != null)
+        {
             _controller.SetState(_controller.IdleState);
+        }
     }
 
     public override void OnExit()
@@ -84,4 +100,15 @@ public class WalkState : States<TroopController>
 
         return closest;
     }
+    
+    private void OnDrawGizmosSelected()
+    {
+        if (_controller == null) return;
+
+        float radius = huntEnemiesAnywhere ? huntRange : detectionRange;
+
+        Gizmos.color = huntEnemiesAnywhere ? Color.red : Color.yellow;
+        Gizmos.DrawWireSphere(_controller.transform.position, radius);
+    }
 }
+

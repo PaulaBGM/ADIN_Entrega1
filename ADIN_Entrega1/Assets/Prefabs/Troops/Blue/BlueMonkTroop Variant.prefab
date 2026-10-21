@@ -12,6 +12,10 @@ PrefabInstance:
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 9100000, guid: 010817759ac3943d8a63d1698ab7d60e, type: 2}
+    - target: {fileID: 2073705740334853389, guid: cdd7c9fd4fd27f54e835f9c734c20c82, type: 3}
+      propertyPath: allyLayer.m_Bits
+      value: 8
+      objectReference: {fileID: 0}
     - target: {fileID: 3455747832585698828, guid: cdd7c9fd4fd27f54e835f9c734c20c82, type: 3}
       propertyPath: m_LocalPosition.x
       value: -3.52
@@ -67,6 +71,10 @@ PrefabInstance:
     - target: {fileID: 8451943837878138442, guid: cdd7c9fd4fd27f54e835f9c734c20c82, type: 3}
       propertyPath: m_Layer
       value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8855080503512467196, guid: cdd7c9fd4fd27f54e835f9c734c20c82, type: 3}
+      propertyPath: m_FlipX
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8855080503512467196, guid: cdd7c9fd4fd27f54e835f9c734c20c82, type: 3}
       propertyPath: m_Sprite
