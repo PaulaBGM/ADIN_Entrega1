@@ -9,8 +9,8 @@ namespace FSM.Enemy
         [SerializeField] private TroopStats stats;
 
         [Header("Parámetros de dirección del Animator")]
-        [SerializeField] private string directionXParameter = "directionX";
-        [SerializeField] private string directionYParameter = "directionY";
+        [SerializeField] private string directionXParameter = "DirectionX";
+        [SerializeField] private string directionYParameter = "DirectionY";
 
         private HealthSystem _healthSystem;
 
@@ -87,14 +87,12 @@ namespace FSM.Enemy
 
         private void OnEnable()
         {
-            if (_healthSystem != null)
-                _healthSystem.OnTroopDied += TroopDead;
+            if (_healthSystem != null) _healthSystem.OnTroopDied += TroopDead;
         }
 
         private void OnDisable()
         {
-            if (_healthSystem != null)
-                _healthSystem.OnTroopDied -= TroopDead;
+            if (_healthSystem != null) _healthSystem.OnTroopDied -= TroopDead;
         }
 
         private void TroopDead()
@@ -103,8 +101,7 @@ namespace FSM.Enemy
             MonoBehaviour[] states = { IdleState, WalkState, AttackState, ShootAttackState, RangedIdleState };
 
             foreach (var state in states)
-                if (state != null)
-                    state.enabled = false;
+                if (state != null) state.enabled = false;
 
             StopAllCoroutines();
 
@@ -114,11 +111,14 @@ namespace FSM.Enemy
                 Mover.enabled = false;
             }
 
-            // No desactivar el Animator para permitir la animación de muerte
+            // No desactivar el Animator para permitir la animación de muerte.
             if (Animator != null)
             {
-                Animator.SetBool(IsAttackingHash, false);
-                Animator.SetBool(IsAttacking2Hash, false);
+                if (HasAnimatorParameter("isAttacking", AnimatorControllerParameterType.Bool))
+                    Animator.SetBool(IsAttackingHash, false);
+
+                if (HasAnimatorParameter("isAttacking2", AnimatorControllerParameterType.Bool))
+                    Animator.SetBool(IsAttacking2Hash, false);
             }
 
             var col = GetComponent<Collider2D>();
@@ -157,24 +157,41 @@ namespace FSM.Enemy
         // Lanza la animación de curación una sola vez.
         public void TriggerHealAnimation()
         {
-            Animator.SetTrigger(IsHealing);
+            if (HasAnimatorParameter("isHealing", AnimatorControllerParameterType.Trigger))
+                Animator.SetTrigger(IsHealing);
         }
 
-        // Activa la animación de ataque y actualiza la dirección del lancero
+        // Activa la animación de ataque y actualiza la dirección del lancero.
         public void SetMeleeAttackAnimation(bool attacking, bool secondAttack, Vector2 direction)
         {
-            if (Animator == null)
-                return;
+            // Activar la animación de ataque correspondiente solo si el parámetro existe.
+            if (HasAnimatorParameter("isAttacking", AnimatorControllerParameterType.Bool))
+                Animator.SetBool(IsAttackingHash, attacking && !secondAttack);
 
-            Animator.SetBool(IsAttackingHash, attacking && !secondAttack);
+            if (HasAnimatorParameter("isAttacking2", AnimatorControllerParameterType.Bool))
+                Animator.SetBool(IsAttacking2Hash, attacking && secondAttack);
 
-            Animator.SetBool(IsAttacking2Hash, attacking && secondAttack);
-
-            if (!string.IsNullOrEmpty(directionXParameter))
+            // Actualizar la dirección solo si este Animator tiene esos parámetros.
+            if (HasAnimatorParameter(directionXParameter, AnimatorControllerParameterType.Float))
                 Animator.SetFloat(directionXParameter, direction.x);
 
-            if (!string.IsNullOrEmpty(directionYParameter))
+            if (HasAnimatorParameter(directionYParameter, AnimatorControllerParameterType.Float))
                 Animator.SetFloat(directionYParameter, direction.y);
+        }
+
+        // Comprueba que el parámetro existe y que es del tipo esperado.
+        private bool HasAnimatorParameter(string parameterName, AnimatorControllerParameterType parameterType)
+        {
+            if (Animator == null || string.IsNullOrEmpty(parameterName))
+                return false;
+
+            foreach (AnimatorControllerParameter parameter in Animator.parameters)
+            {
+                if (parameter.name == parameterName && parameter.type == parameterType)
+                    return true;
+            }
+
+            return false;
         }
     }
 }

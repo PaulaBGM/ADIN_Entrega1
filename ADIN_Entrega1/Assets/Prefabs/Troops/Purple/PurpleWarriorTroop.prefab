@@ -94,9 +94,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9cd45da54e8713e47ad36459b582ff02, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  huntEnemiesAnywhere: 1
-  huntRange: 1.5
-  detectionRange: 5
   enemyLayer:
     serializedVersion: 2
     m_Bits: 8
@@ -301,6 +298,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1893067272288302228}
     m_Modifications:
+    - target: {fileID: 169907677050957235, guid: 67b374babc6bef14286b524e4e70e30b, type: 3}
+      propertyPath: m_PresetInfoIsWorld
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 278494440980878453, guid: 67b374babc6bef14286b524e4e70e30b, type: 3}
       propertyPath: m_Name
       value: HealthBar

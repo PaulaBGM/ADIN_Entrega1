@@ -72,6 +72,18 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3389150301430271209, guid: a1ef714beacdcd043a606f2cd6c802ab, type: 3}
+      propertyPath: m_Color.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3389150301430271209, guid: a1ef714beacdcd043a606f2cd6c802ab, type: 3}
+      propertyPath: m_Color.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3389150301430271209, guid: a1ef714beacdcd043a606f2cd6c802ab, type: 3}
+      propertyPath: m_Color.r
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4987516142837827784, guid: a1ef714beacdcd043a606f2cd6c802ab, type: 3}
       propertyPath: enemyLayer.m_Bits
       value: 64

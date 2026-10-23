@@ -16,6 +16,18 @@ PrefabInstance:
       propertyPath: allyLayer.m_Bits
       value: 8
       objectReference: {fileID: 0}
+    - target: {fileID: 2484644882358891062, guid: cdd7c9fd4fd27f54e835f9c734c20c82, type: 3}
+      propertyPath: m_Color.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2484644882358891062, guid: cdd7c9fd4fd27f54e835f9c734c20c82, type: 3}
+      propertyPath: m_Color.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2484644882358891062, guid: cdd7c9fd4fd27f54e835f9c734c20c82, type: 3}
+      propertyPath: m_Color.r
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3455747832585698828, guid: cdd7c9fd4fd27f54e835f9c734c20c82, type: 3}
       propertyPath: m_LocalPosition.x
       value: -3.52
