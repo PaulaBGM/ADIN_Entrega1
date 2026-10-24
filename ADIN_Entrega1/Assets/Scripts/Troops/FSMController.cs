@@ -23,7 +23,7 @@ public class FSMController<T> : MonoBehaviour where T : FSMController<T> // T de
         if (currentState == newState)
             return;
 
-        Debug.Log($"[{name}] Cambio de estado: {(currentState != null ? currentState.GetType().Name : "Ninguno")} -> {newState.GetType().Name}");
+        //Debug.Log($"[{name}] Cambio de estado: {(currentState != null ? currentState.GetType().Name : "Ninguno")} -> {newState.GetType().Name}");
 
         if (currentState != null)
             currentState.OnExit();

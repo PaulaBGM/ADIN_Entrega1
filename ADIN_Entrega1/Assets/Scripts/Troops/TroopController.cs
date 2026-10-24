@@ -1,3 +1,5 @@
+using System;
+using FSM.Enemy;
 using UnityEngine;
 
 namespace FSM.Enemy
@@ -7,14 +9,10 @@ namespace FSM.Enemy
         [SerializeField] private float timeToDestroy = 2f;
         [SerializeField] private EventManagerSO _eventManagerSo;
         [SerializeField] private TroopStats stats;
-
-        [Header("Parámetros de dirección del Animator")]
-        [SerializeField] private string directionXParameter = "DirectionX";
-        [SerializeField] private string directionYParameter = "DirectionY";
+        [SerializeField] private Transform defaultWaypoint;
 
         private HealthSystem _healthSystem;
 
-        // Destino de la base (lo asigna el spawner) y enemigo actual
         public Transform Waypoint { get; set; }
         public Transform Target { get; set; }
 
@@ -22,29 +20,31 @@ namespace FSM.Enemy
         public Animator Animator { get; private set; }
         public TroopPathMover Mover { get; private set; }
         public HealState HealState { get; private set; }
-
         public IdleState IdleState { get; private set; }
         public WalkState WalkState { get; private set; }
+        public bool IsHurt { get; private set; }
         public RangedIdleState RangedIdleState { get; private set; }
 
-        // Estados de ataque (implementan ITroopAttack)
         public ITroopAttack CurrentAttackState { get; private set; }
         public AttackState AttackState { get; private set; }
         public ShootAttackState ShootAttackState { get; private set; }
 
-        [SerializeField] private Transform defaultWaypoint; // Solo para pruebas, luego lo asigna el spawner
+        public event Action HurtStarted;
+        public event Action HurtFinished;
+        public event Action AttackAnimationFinished;
 
         private static readonly int IsHittedHash = Animator.StringToHash("isHitted");
-        private static readonly int IsHealing = Animator.StringToHash("isHealing");
+        private static readonly int IsHealingHash = Animator.StringToHash("isHealing");
         private static readonly int IsDeadHash = Animator.StringToHash("isDead");
         private static readonly int SpeedHash = Animator.StringToHash("speed");
         private static readonly int IsAttackingHash = Animator.StringToHash("isAttacking");
         private static readonly int IsAttacking2Hash = Animator.StringToHash("isAttacking2");
+        private static readonly int DirectionXHash = Animator.StringToHash("DirectionX");
+        private static readonly int DirectionYHash = Animator.StringToHash("DirectionY");
 
         private void Awake()
         {
-            if (stats == null)
-                Debug.LogError($"[{name}] No tiene un TroopStats asignado.", this);
+            if (stats == null) Debug.LogError($"[{name}] No tiene un TroopStats asignado.", this);
 
             Mover = GetComponent<TroopPathMover>();
             Animator = GetComponentInChildren<Animator>();
@@ -64,25 +64,18 @@ namespace FSM.Enemy
             RangedIdleState?.InitController(this);
             HealState?.InitController(this);
 
-            // Por defecto ranged si existe el componente, si no melee
             CurrentAttackState = ShootAttackState != null ? (ITroopAttack)ShootAttackState : AttackState;
         }
 
         private void Start()
         {
-            if (Waypoint == null)
-                Waypoint = defaultWaypoint;
+            if (Waypoint == null) Waypoint = defaultWaypoint;
 
-            if (HealState != null)
-                SetState(HealState);
-            else if (ShootAttackState != null && RangedIdleState != null)
-                SetState(RangedIdleState);
-            else if (WalkState != null)
-                SetState(WalkState);
-            else if (IdleState != null)
-                SetState(IdleState);
-            else
-                Debug.LogWarning($"[{name}] No tiene un estado inicial disponible.");
+            if (HealState != null) SetState(HealState);
+            else if (ShootAttackState != null && RangedIdleState != null) SetState(RangedIdleState);
+            else if (WalkState != null) SetState(WalkState);
+            else if (IdleState != null) SetState(IdleState);
+            else Debug.LogWarning($"[{name}] No tiene un estado inicial disponible.");
         }
 
         private void OnEnable()
@@ -97,11 +90,8 @@ namespace FSM.Enemy
 
         private void TroopDead()
         {
-            // Detiene los estados para evitar que sigan actuando tras morir
-            MonoBehaviour[] states = { IdleState, WalkState, AttackState, ShootAttackState, RangedIdleState };
-
-            foreach (var state in states)
-                if (state != null) state.enabled = false;
+            MonoBehaviour[] states = { IdleState, WalkState, AttackState, ShootAttackState, RangedIdleState, HealState };
+            foreach (MonoBehaviour state in states) if (state != null) state.enabled = false;
 
             StopAllCoroutines();
 
@@ -111,85 +101,119 @@ namespace FSM.Enemy
                 Mover.enabled = false;
             }
 
-            // No desactivar el Animator para permitir la animación de muerte.
-            if (Animator != null)
-            {
-                if (HasAnimatorParameter("isAttacking", AnimatorControllerParameterType.Bool))
-                    Animator.SetBool(IsAttackingHash, false);
+            ClearAttackAnimations();
 
-                if (HasAnimatorParameter("isAttacking2", AnimatorControllerParameterType.Bool))
-                    Animator.SetBool(IsAttacking2Hash, false);
-            }
+            if (Animator != null && HasAnimatorParameter("isDead", AnimatorControllerParameterType.Trigger))
+                Animator.SetTrigger(IsDeadHash);
 
-            var col = GetComponent<Collider2D>();
-            if (col != null)
-                col.enabled = false;
+            Collider2D col = GetComponent<Collider2D>();
+            if (col != null) col.enabled = false;
 
             enabled = false;
-
             Destroy(gameObject, timeToDestroy);
+        }
+
+        public void ClearAttackAnimations()
+        {
+            if (Animator == null) return;
+            if (HasAnimatorParameter("isAttacking", AnimatorControllerParameterType.Bool)) Animator.SetBool(IsAttackingHash, false);
+            if (HasAnimatorParameter("isAttacking2", AnimatorControllerParameterType.Bool)) Animator.SetBool(IsAttacking2Hash, false);
         }
 
         public void PlayHitAnimation()
         {
-            if (Animator != null)
+            if (_healthSystem != null && _healthSystem.IsDead) return;
+
+            IsHurt = true;
+            HurtStarted?.Invoke();
+
+            ClearAttackAnimations();
+            SetMovementSpeed(0f);
+            if (Mover != null) Mover.Stop();
+
+            if (Animator != null && HasAnimatorParameter("isHitted", AnimatorControllerParameterType.Trigger))
+            {
+                Animator.ResetTrigger(IsHittedHash);
                 Animator.SetTrigger(IsHittedHash);
+            }
+            else Debug.LogWarning($"[{name}] No se encontró el parámetro Trigger 'isHitted' en el Animator.", this);
+        }
+
+        public void FinishHitAnimation()
+        {
+            IsHurt = false;
+            HurtFinished?.Invoke();
+
+            Debug.Log($"[{name}] Hurt finalizado; IsHurt = false.", this);
+        }
+
+        public void NotifyAttackAnimationFinished()
+        {
+            AttackAnimationFinished?.Invoke();
         }
 
         public void PlayDeathAnimation()
         {
-            if (Animator != null)
+            if (Animator != null && HasAnimatorParameter("isDead", AnimatorControllerParameterType.Trigger))
                 Animator.SetTrigger(IsDeadHash);
         }
 
         public void SetMovementSpeed(float speed)
         {
-            if (Animator != null)
-                Animator.SetFloat(SpeedHash, speed);
+            if (Animator != null && HasAnimatorParameter("speed", AnimatorControllerParameterType.Float))
+                Animator.SetFloat(SpeedHash, IsHurt ? 0f : speed);
         }
 
         public void SetAttacking(bool attacking)
         {
-            if (Animator != null)
+            if (Animator == null || (IsHurt && attacking)) return;
+
+            if (HasAnimatorParameter("isAttacking", AnimatorControllerParameterType.Bool))
                 Animator.SetBool(IsAttackingHash, attacking);
-        }
-        
-        // Lanza la animación de curación una sola vez.
-        public void TriggerHealAnimation()
-        {
-            if (HasAnimatorParameter("isHealing", AnimatorControllerParameterType.Trigger))
-                Animator.SetTrigger(IsHealing);
+
+            if (!attacking && HasAnimatorParameter("isAttacking2", AnimatorControllerParameterType.Bool))
+                Animator.SetBool(IsAttacking2Hash, false);
         }
 
-        // Activa la animación de ataque y actualiza la dirección del lancero.
         public void SetMeleeAttackAnimation(bool attacking, bool secondAttack, Vector2 direction)
         {
-            // Activar la animación de ataque correspondiente solo si el parámetro existe.
+            if (Animator == null)
+            {
+                Debug.LogError($"[{name}] No se encontró el Animator.", this);
+                return;
+            }
+
+            if (IsHurt && attacking)
+            {
+                ClearAttackAnimations();
+                return;
+            }
+
             if (HasAnimatorParameter("isAttacking", AnimatorControllerParameterType.Bool))
                 Animator.SetBool(IsAttackingHash, attacking && !secondAttack);
 
             if (HasAnimatorParameter("isAttacking2", AnimatorControllerParameterType.Bool))
                 Animator.SetBool(IsAttacking2Hash, attacking && secondAttack);
 
-            // Actualizar la dirección solo si este Animator tiene esos parámetros.
-            if (HasAnimatorParameter(directionXParameter, AnimatorControllerParameterType.Float))
-                Animator.SetFloat(directionXParameter, direction.x);
+            if (HasAnimatorParameter("DirectionX", AnimatorControllerParameterType.Float))
+                Animator.SetFloat(DirectionXHash, direction.x);
 
-            if (HasAnimatorParameter(directionYParameter, AnimatorControllerParameterType.Float))
-                Animator.SetFloat(directionYParameter, direction.y);
+            if (HasAnimatorParameter("DirectionY", AnimatorControllerParameterType.Float))
+                Animator.SetFloat(DirectionYHash, direction.y);
         }
 
-        // Comprueba que el parámetro existe y que es del tipo esperado.
+        public void TriggerHealAnimation()
+        {
+            if (Animator != null && HasAnimatorParameter("isHealing", AnimatorControllerParameterType.Trigger))
+                Animator.SetTrigger(IsHealingHash);
+        }
+
         private bool HasAnimatorParameter(string parameterName, AnimatorControllerParameterType parameterType)
         {
-            if (Animator == null || string.IsNullOrEmpty(parameterName))
-                return false;
+            if (Animator == null || string.IsNullOrEmpty(parameterName)) return false;
 
             foreach (AnimatorControllerParameter parameter in Animator.parameters)
-            {
-                if (parameter.name == parameterName && parameter.type == parameterType)
-                    return true;
-            }
+                if (parameter.name == parameterName && parameter.type == parameterType) return true;
 
             return false;
         }

@@ -24,6 +24,10 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 3
       objectReference: {fileID: 0}
+    - target: {fileID: 3953068228211858602, guid: 3957f8fdc5fdda2469caa548334f721b, type: 3}
+      propertyPath: m_Constraints
+      value: 4
+      objectReference: {fileID: 0}
     - target: {fileID: 4356049749193198805, guid: 3957f8fdc5fdda2469caa548334f721b, type: 3}
       propertyPath: m_Controller
       value: 
@@ -86,6 +90,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6171200663179574743, guid: 3957f8fdc5fdda2469caa548334f721b, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7643031544138378756, guid: 3957f8fdc5fdda2469caa548334f721b, type: 3}
+      propertyPath: m_IsTrigger
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []

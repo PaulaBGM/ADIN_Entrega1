@@ -3,48 +3,50 @@ using UnityEngine;
 
 public class AttackState : States<TroopController>, ITroopAttack
 {
-    [SerializeField] private float repathInterval = 0.3f;
+    [Header("Configuración del Warrior")]
+    [SerializeField] private bool alternateAttackAnimations = false;
+    [SerializeField] private bool useDirectionalAttackAnimation = false;
+    [SerializeField] private float animationFallbackTime = 1f;
 
-    [Header("Animaciones de ataque")]
-    [SerializeField] private bool alternateAttackAnimations;
-    [SerializeField] private bool useDirectionalAttackAnimation;
+    [Header("Debug del cooldown")]
+    [SerializeField] private bool debugCooldown = true;
+    [SerializeField] private float debugInterval = 0.25f;
 
-    private float nextAttack;
-    private float nextRepath;
+    private float nextAttackTime;
+    private float attackFinishTime;
+    private float nextCooldownDebugTime;
     private HealthSystem targetHealth;
     private bool useSecondAttack;
     private bool waitingForHit;
+    private bool damageAppliedThisAttack;
+
+    public bool IsAttackInProgress => waitingForHit;
 
     public override void OnEnter()
     {
-        targetHealth = _controller.Target != null ? _controller.Target.GetComponentInParent<HealthSystem>() : null;
+        _controller.HurtStarted -= HandleHurtStarted;
+        _controller.HurtStarted += HandleHurtStarted;
+        _controller.HurtFinished -= HandleHurtFinished;
+        _controller.HurtFinished += HandleHurtFinished;
+        _controller.AttackAnimationFinished -= FinishAttackAnimation;
+        _controller.AttackAnimationFinished += FinishAttackAnimation;
 
-        nextRepath = 0f;
-        nextAttack = 0f;
-        useSecondAttack = false;
         waitingForHit = false;
-
-        _controller.SetMeleeAttackAnimation(false, false, Vector2.zero);
+        damageAppliedThisAttack = false;
+        useSecondAttack = false;
+        targetHealth = null;
+        StopMovement();
+        _controller.SetMovementSpeed(0f);
+        SetAttackAnimation(false, Vector2.zero);
     }
 
     public override void OnUpdate()
     {
-        if (_controller.Stats == null)
-            return;
+        if (_controller.Stats == null || _controller.IsHurt) return;
 
-        Transform target = _controller.Target;
-
-        if (target == null || targetHealth == null || targetHealth.IsDead)
+        if (!TryGetValidTarget(out Transform target))
         {
-            waitingForHit = false;
-            _controller.SetMeleeAttackAnimation(false, false, Vector2.zero);
-            _controller.Target = null;
-
-            if (_controller.WalkState != null)
-                _controller.SetState(_controller.WalkState);
-            else if (_controller.IdleState != null)
-                _controller.SetState(_controller.IdleState);
-
+            ExitAttackState();
             return;
         }
 
@@ -53,98 +55,173 @@ public class AttackState : States<TroopController>, ITroopAttack
         if (distance > _controller.Stats.attackRange)
         {
             waitingForHit = false;
-            _controller.SetMeleeAttackAnimation(false, false, Vector2.zero);
+            damageAppliedThisAttack = false;
+            SetAttackAnimation(false, Vector2.zero);
+            _controller.SetState(_controller.WalkState);
+            return;
+        }
 
-            if (Time.time >= nextRepath && _controller.Mover != null)
+        StopMovement();
+        _controller.SetMovementSpeed(0f);
+        if (_controller.Mover != null) _controller.Mover.FaceTowards(target.position);
+
+        if (waitingForHit && Time.time >= attackFinishTime)
+        {
+            if (debugCooldown) Debug.Log($"[{_controller.name}] DEBUG: se fuerza el fin de la animación de ataque.", _controller);
+            FinishAttackAnimation();
+        }
+
+        if (waitingForHit) return;
+
+        if (Time.time < nextAttackTime)
+        {
+            if (debugCooldown && Time.time >= nextCooldownDebugTime)
             {
-                nextRepath = Time.time + repathInterval;
-                _controller.Mover.MoveTo(target.position);
+                Debug.Log($"[{_controller.name}] DEBUG: cooldown restante = {nextAttackTime - Time.time:F2} s", _controller);
+                nextCooldownDebugTime = Time.time + Mathf.Max(0.05f, debugInterval);
             }
-
             return;
         }
 
-        if (_controller.Mover != null)
-        {
-            _controller.Mover.Stop();
-            _controller.Mover.FaceTowards(target.position);
-        }
-
-        // Mientras se reproduce un ataque, no iniciar otro.
-        if (waitingForHit)
-            return;
-
-        if (Time.time >= nextAttack)
-        {
-            nextAttack = Time.time + _controller.Stats.attackCooldown;
-            waitingForHit = true;
-
-            Vector2 direction =
-                (target.position - _controller.transform.position).normalized;
-
-            if (useDirectionalAttackAnimation)
-                direction = GetCardinalDirection(direction);
-
-            if (alternateAttackAnimations)
-                useSecondAttack = !useSecondAttack;
-
-            _controller.SetMeleeAttackAnimation(
-                true,
-                alternateAttackAnimations && useSecondAttack,
-                direction
-            );
-        }
+        StartAttack(target);
     }
 
-    // Este método se llamará desde un Animation Event en el momento del golpe.
-    public void ApplyAttackDamage()
+    private void HandleHurtStarted()
     {
-        Transform target = _controller.Target;
+        InterruptAttackForHurt();
+    }
 
-        if (target == null || _controller.Stats == null)
+    private void HandleHurtFinished()
+    {
+        // El ataque interrumpido no tiene que esperar el cooldown anterior.
+        nextAttackTime = Time.time;
+        attackFinishTime = 0f;
+        if (debugCooldown) Debug.Log($"[{_controller.name}] DEBUG: terminó Hurt; puede volver a atacar.", _controller);
+    }
+
+    private bool TryGetValidTarget(out Transform target)
+    {
+        target = _controller.Target;
+        if (target == null)
         {
-            waitingForHit = false;
-            return;
+            targetHealth = null;
+            return false;
         }
 
         HealthSystem health = target.GetComponentInParent<HealthSystem>();
-
         if (health == null || health.IsDead)
         {
-            waitingForHit = false;
-            return;
+            targetHealth = null;
+            return false;
         }
 
-        float distance = Vector2.Distance(_controller.transform.position, target.position);
+        targetHealth = health;
+        return true;
+    }
 
-        // Comprobar el alcance otra vez justo en el momento del impacto.
-        if (distance <= _controller.Stats.attackRange)
-            health.TakeDamage(_controller.Stats.attackDamage);
+    private void StartAttack(Transform target)
+    {
+        if (_controller.IsHurt || waitingForHit || targetHealth == null || targetHealth.IsDead) return;
+
+        waitingForHit = true;
+        damageAppliedThisAttack = false;
+        attackFinishTime = Time.time + Mathf.Max(0.1f, animationFallbackTime);
+
+        if (alternateAttackAnimations) useSecondAttack = !useSecondAttack;
+
+        Vector2 direction = useDirectionalAttackAnimation ? CalculateAttackDirection(target) : Vector2.zero;
+        SetAttackAnimation(true, direction);
+
+        if (debugCooldown) Debug.Log($"[{_controller.name}] DEBUG: empieza ataque a las {Time.time:F2}; cooldown configurado = {_controller.Stats.attackCooldown:F2} s", _controller);
+    }
+
+    public void InterruptAttackForHurt()
+    {
+        bool wasAttacking = waitingForHit;
+        waitingForHit = false;
+        damageAppliedThisAttack = false;
+        attackFinishTime = 0f;
+        SetAttackAnimation(false, Vector2.zero);
+        StopMovement();
+        _controller.SetMovementSpeed(0f);
+
+        if (debugCooldown && wasAttacking) Debug.Log($"[{_controller.name}] DEBUG: ataque interrumpido por daño.", _controller);
+    }
+
+    private void StopMovement()
+    {
+        if (_controller.Mover != null) _controller.Mover.Stop();
+    }
+
+    private void SetAttackAnimation(bool attacking, Vector2 direction)
+    {
+        _controller.SetMeleeAttackAnimation(attacking, attacking && alternateAttackAnimations && useSecondAttack, direction);
+    }
+
+    private Vector2 CalculateAttackDirection(Transform target)
+    {
+        Vector2 direction = (Vector2)(target.position - _controller.transform.position);
+        if (direction.sqrMagnitude <= 0.001f) return Vector2.down;
+
+        direction.Normalize();
+        return Mathf.Abs(direction.x) > Mathf.Abs(direction.y)
+            ? new Vector2(Mathf.Sign(direction.x), 0f)
+            : new Vector2(0f, Mathf.Sign(direction.y));
+    }
+
+    public void ApplyAttackDamage() { }
+
+    public bool ApplyAttackDamageTo(HealthSystem health)
+    {
+        if (!waitingForHit || _controller.IsHurt || damageAppliedThisAttack || health == null || health.IsDead || _controller.Stats == null || targetHealth == null || targetHealth.IsDead || health != targetHealth) return false;
+
+        damageAppliedThisAttack = true;
+        health.TakeDamage(_controller.Stats.attackDamage);
+
+        if (debugCooldown) Debug.Log($"[{_controller.name}] DEBUG: impacto aplicado. Daño = {_controller.Stats.attackDamage}", _controller);
+        return true;
+    }
+
+    public void FinishAttackAnimation()
+    {
+        if (!waitingForHit || _controller.IsHurt) return;
 
         waitingForHit = false;
-        _controller.SetMeleeAttackAnimation(false, false, Vector2.zero);
+        SetAttackAnimation(false, Vector2.zero);
+
+        float cooldown = Mathf.Max(0f, _controller.Stats != null ? _controller.Stats.attackCooldown : 0f);
+        nextAttackTime = Time.time + cooldown;
+        nextCooldownDebugTime = Time.time;
+
+        if (debugCooldown) Debug.Log($"[{_controller.name}] DEBUG: ataque terminado; cooldown = {cooldown:F2} s.", _controller);
+    }
+
+    private void ExitAttackState()
+    {
+        waitingForHit = false;
+        damageAppliedThisAttack = false;
+        targetHealth = null;
+        _controller.Target = null;
+        StopMovement();
+        _controller.SetMovementSpeed(0f);
+        SetAttackAnimation(false, Vector2.zero);
+
+        if (_controller.WalkState != null) _controller.SetState(_controller.WalkState);
+        else if (_controller.IdleState != null) _controller.SetState(_controller.IdleState);
     }
 
     public override void OnExit()
     {
+        _controller.HurtStarted -= HandleHurtStarted;
+        _controller.HurtFinished -= HandleHurtFinished;
+        _controller.AttackAnimationFinished -= FinishAttackAnimation;
+
         waitingForHit = false;
-
-        if (_controller.Mover != null)
-            _controller.Mover.Stop();
-
-        _controller.SetMeleeAttackAnimation(false, false, Vector2.zero);
+        damageAppliedThisAttack = false;
+        StopMovement();
+        _controller.SetMovementSpeed(0f);
+        SetAttackAnimation(false, Vector2.zero);
     }
 
-    public void OnAttack(Transform target)
-    {
-        // El daño se aplica mediante ApplyAttackDamage desde la animación.
-    }
-
-    private Vector2 GetCardinalDirection(Vector2 direction)
-    {
-        if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
-            return new Vector2(Mathf.Sign(direction.x), 0f);
-
-        return new Vector2(0f, Mathf.Sign(direction.y));
-    }
+    public void OnAttack(Transform target) { }
 }

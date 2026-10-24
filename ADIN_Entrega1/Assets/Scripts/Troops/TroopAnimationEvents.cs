@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using FSM.Enemy;
 
@@ -5,34 +6,106 @@ public class TroopAnimationEvents : MonoBehaviour
 {
     private TroopController troopController;
 
+    [Header("Collider del arma")]
+    [SerializeField] private BoxCollider2D attackCollider;
+
+    private bool hitDetectedThisSwing;
+
+    public event Action AttackFinished;
+    public event Action HitFinished;
+
     private void Awake()
     {
         troopController = GetComponentInParent<TroopController>();
+
+        if (attackCollider == null) attackCollider = GetComponentInChildren<BoxCollider2D>(true);
+
+        if (attackCollider != null) attackCollider.enabled = false;
+        else Debug.LogWarning($"[{name}] No se ha encontrado el collider del arma.", this);
+
+        if (troopController == null) Debug.LogError($"[{name}] No se ha encontrado TroopController en los padres.", this);
     }
 
-    // Esta función se llama desde el Animation Event.
-    public void ApplyAttackDamage()
+    // Animation Event: comienza la ventana de impacto.
+    public void StartAttackHitbox()
     {
-        if (troopController == null)
-            return;
+        if (attackCollider == null || troopController == null || troopController.IsHurt) return;
 
-        if (troopController.AttackState != null)
-            troopController.AttackState.ApplyAttackDamage();
+        hitDetectedThisSwing = false;
+        attackCollider.enabled = true;
     }
-    
+
+    // Animation Event: termina la ventana de impacto.
+    public void EndAttackHitbox()
+    {
+        DisableAttackHitbox();
+    }
+
+    public void DisableAttackHitbox()
+    {
+        if (attackCollider != null) attackCollider.enabled = false;
+    }
+
+    // Animation Event: termina el clip de ataque.
+    public void FinishAttackAnimation()
+    {
+        DisableAttackHitbox();
+
+        if (troopController == null || troopController.AttackState == null) return;
+
+        troopController.AttackState.FinishAttackAnimation();
+        AttackFinished?.Invoke();
+    }
+
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (attackCollider == null || !attackCollider.enabled || hitDetectedThisSwing) return;
+        if (troopController == null || troopController.IsHurt || troopController.AttackState == null) return;
+
+        HealthSystem health = other.GetComponentInParent<HealthSystem>();
+        if (health == null || health.IsDead) return;
+
+        if (troopController.AttackState.ApplyAttackDamageTo(health))
+        {
+            hitDetectedThisSwing = true;
+            DisableAttackHitbox();
+        }
+    }
+
+    // Animation Event: aplica la curación.
     public void ApplyHeal()
     {
-        if (troopController == null || troopController.HealState == null)
-            return;
+        if (troopController == null || troopController.HealState == null) return;
 
         troopController.HealState.ApplyHeal();
     }
 
+    // Animation Event: termina la curación.
     public void FinishHeal()
     {
-        if (troopController == null || troopController.HealState == null)
-            return;
+        if (troopController == null || troopController.HealState == null) return;
 
         troopController.HealState.FinishHeal();
+    }
+
+    // Animation Event: termina la animación Hurt.
+    public void FinishHitAnimation()
+    {
+        DisableAttackHitbox();
+
+        if (troopController == null)
+        {
+            Debug.LogError($"[{name}] No se puede terminar Hurt: falta TroopController.", this);
+            return;
+        }
+
+        Debug.Log($"[{troopController.name}] Animation Event FinishHitAnimation ejecutado.", troopController);
+        troopController.FinishHitAnimation();
+        HitFinished?.Invoke();
+    }
+
+    private void OnDisable()
+    {
+        DisableAttackHitbox();
     }
 }

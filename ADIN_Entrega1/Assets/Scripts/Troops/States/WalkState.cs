@@ -1,4 +1,3 @@
-
 using FSM.Enemy;
 using UnityEngine;
 
@@ -17,6 +16,13 @@ public class WalkState : States<TroopController>
         if (_controller.Stats == null)
         {
             Debug.LogError($"[{name}] No tiene estadísticas asignadas.", _controller);
+            return;
+        }
+        
+        if (_controller.IsHurt)
+        {
+            if (_controller.Mover != null) _controller.Mover.Stop();
+            _controller.SetMovementSpeed(0f);
             return;
         }
 
@@ -53,8 +59,19 @@ public class WalkState : States<TroopController>
             {
                 _controller.Target = closest;
 
-                if (_controller.AttackState != null)
+                float distance = Vector2.Distance(_controller.transform.position, closest.position);
+
+                if (distance <= _controller.Stats.attackRange && _controller.AttackState != null)
+                {
                     _controller.SetState(_controller.AttackState);
+                    return;
+                }
+
+                if (_controller.Mover != null)
+                {
+                    _controller.Mover.MoveTo(closest.position);
+                    _controller.SetMovementSpeed(_controller.Stats.movementSpeed);
+                }
 
                 return;
             }
