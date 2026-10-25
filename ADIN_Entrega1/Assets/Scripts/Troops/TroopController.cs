@@ -7,6 +7,14 @@ namespace FSM.Enemy
     public class TroopController : FSMController<TroopController>
     {
         [SerializeField] private float timeToDestroy = 2f;
+
+        [Header("Hurt")]
+        [SerializeField, Tooltip("Parte del nombre del clip de hurt (p. ej. 'Hitted'). Sirve para detectar cuándo acaba sin depender de un evento de animación.")]
+        private string hurtClipKeyword = "Hitted";
+        [SerializeField, Tooltip("Tiempo máximo de hurt por si algo falla.")]
+        private float hurtMaxTime = 1f;
+
+        private Coroutine hurtRoutine;
         [SerializeField] private EventManagerSO _eventManagerSo;
         [SerializeField] private TroopStats stats;
         [SerializeField] private Transform defaultWaypoint;
@@ -137,10 +145,43 @@ namespace FSM.Enemy
                 Animator.SetTrigger(IsHittedHash);
             }
             else Debug.LogWarning($"[{name}] No se encontró el parámetro Trigger 'isHitted' en el Animator.", this);
+
+            // Detecta el fin del hurt sin depender de un evento de animación
+            if (hurtRoutine != null) StopCoroutine(hurtRoutine);
+            hurtRoutine = StartCoroutine(WaitHurtEnd());
+        }
+
+        private System.Collections.IEnumerator WaitHurtEnd()
+        {
+            float start = Time.time;
+            bool entered = false;
+
+            while (Time.time - start < hurtMaxTime)
+            {
+                yield return null;
+
+                if (Animator == null) break;
+
+                AnimatorClipInfo[] clips = Animator.GetCurrentAnimatorClipInfo(0);
+                bool inHurt = clips.Length > 0 && clips[0].clip != null &&
+                              clips[0].clip.name.Contains(hurtClipKeyword);
+
+                if (inHurt) entered = true;
+                else if (entered) break; // Ya salió del clip de hurt
+
+                if (inHurt && Animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 1f) break;
+            }
+
+            hurtRoutine = null;
+            FinishHitAnimation();
         }
 
         public void FinishHitAnimation()
         {
+            if (!IsHurt) return; // Ya terminado (por evento o por la rutina)
+
+            if (hurtRoutine != null) { StopCoroutine(hurtRoutine); hurtRoutine = null; }
+
             IsHurt = false;
             HurtFinished?.Invoke();
 

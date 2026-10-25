@@ -10,6 +10,8 @@ public class TroopAnimationEvents : MonoBehaviour
     [SerializeField] private BoxCollider2D attackCollider;
 
     private bool hitDetectedThisSwing;
+    private ContactFilter2D filter;
+    private readonly Collider2D[] results = new Collider2D[16];
 
     public event Action AttackFinished;
     public event Action HitFinished;
@@ -24,6 +26,10 @@ public class TroopAnimationEvents : MonoBehaviour
         else Debug.LogWarning($"[{name}] No se ha encontrado el collider del arma.", this);
 
         if (troopController == null) Debug.LogError($"[{name}] No se ha encontrado TroopController en los padres.", this);
+
+        filter = new ContactFilter2D();
+        filter.NoFilter();
+        filter.useTriggers = true;
     }
 
     // Animation Event: comienza la ventana de impacto.
@@ -57,7 +63,27 @@ public class TroopAnimationEvents : MonoBehaviour
         AttackFinished?.Invoke();
     }
 
+    // El collider del arma está en un hijo (HitBox) y este script en Visual, así que Unity
+    // no siempre entrega OnTriggerEnter2D aquí. Por eso la ventana de impacto se comprueba
+    // también con un solape directo del collider.
+    private void FixedUpdate()
+    {
+        if (attackCollider == null || !attackCollider.enabled || hitDetectedThisSwing) return;
+
+        int count = attackCollider.Overlap(filter, results);
+        for (int i = 0; i < count; i++)
+        {
+            TryHit(results[i]);
+            if (hitDetectedThisSwing) break;
+        }
+    }
+
     private void OnTriggerEnter2D(Collider2D other)
+    {
+        TryHit(other);
+    }
+
+    private void TryHit(Collider2D other)
     {
         if (attackCollider == null || !attackCollider.enabled || hitDetectedThisSwing) return;
         if (troopController == null || troopController.IsHurt || troopController.AttackState == null) return;

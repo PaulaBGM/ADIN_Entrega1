@@ -16,18 +16,19 @@ public enum PlacementKey
 }
 
 /// <summary>
-/// Colocaci�n en grid para dos jugadores, al estilo Mario + Rabbids:
-///  - Cada jugador tiene su campo (zona del mapa) y solo puede colocar tropas dentro de �l.
-///  - Con la tecla de una tropa (J1: 1,2,3,4 � J2: 7,8,9,0) se elige jugador y tropa; clic izquierdo la coloca en una celda.
+/// Colocación en grid para dos jugadores, al estilo Mario + Rabbids:
+///  - Cada jugador tiene su campo (zona del mapa) y solo puede colocar tropas dentro de él.
+///  - Con la tecla de una tropa (J1: 1,2,3,4 · J2: 7,8,9,0) se elige jugador y tropa; clic izquierdo la coloca en una celda.
 ///  - Una celda solo admite una tropa y solo celdas caminables.
 ///  - Cada jugador puede mover su base a cualquier celda libre de su campo.
 ///  - Clic derecho quita una tropa. "Empezar combate" (Enter) las activa a todas a la vez:
 ///    cada tropa va directa a la base enemiga y ataca a los contrincantes con los que se encuentra.
-///  - "Reiniciar" (R) repite la misma formaci�n; "Vaciar" la borra para montar otra combinaci�n.
+///  - "Reiniciar" (R) repite la misma formación; "Vaciar" la borra para montar otra combinación.
 /// </summary>
 public class TroopPlacementManager : MonoBehaviour
 {
-    private const int CellPixels = 8; // P�xeles por celda en la textura de la rejilla
+    private const int CellPixels = 8; // Píxeles por celda en la textura de la rejilla
+    private const int BaseSize = 2;   // La base (torre) ocupa BaseSize x BaseSize celdas (2x2 = 4 celdas)
 
     [System.Serializable]
     public class TroopOption
@@ -45,19 +46,21 @@ public class TroopPlacementManager : MonoBehaviour
         public string name = "Jugador 1";
         [Tooltip("Color de su campo y de sus celdas disponibles.")]
         public Color color = new Color(0.25f, 0.55f, 1f, 1f);
-        [Tooltip("Base del jugador (el objeto de la torre en la escena). Se puede mover dentro de su campo.")]
+        [Tooltip("Prefab de la torre (del Project). Se crea sola al empezar, en el centro de su campo, y es la base del jugador.")]
+        public GameObject basePrefab;
+        [Tooltip("Opcional: una torre que ya esté en la escena. Solo se usa si no hay Base Prefab.")]
         public Transform baseTransform;
-        [Tooltip("Tecla para mover la base (opcional: tambi�n hay un bot�n en el panel).")]
+        [Tooltip("Tecla para mover la base (opcional: también hay un botón en el panel).")]
         public PlacementKey baseKey = PlacementKey.None;
-        [Tooltip("Ajuste visual al centrar la base en la celda (por si el pivote del sprite no queda centrado).")]
+        [Tooltip("Ajuste visual al centrar la base en sus 4 celdas (por si el pivote del sprite no queda centrado).")]
         public Vector2 baseOffset;
-        [Tooltip("Opcional: Tilemap pintado con las celdas de su campo. Si ning�n jugador lo tiene, el mapa se parte en dos.")]
+        [Tooltip("Opcional: Tilemap pintado con las celdas de su campo. Si ningún jugador lo tiene, el mapa se parte en dos.")]
         public Tilemap zone;
         public List<TroopOption> troops = new();
 
-        // Datos en ejecuci�n
+        // Datos en ejecución
         [System.NonSerialized] public Transform targetPoint;   // Punto al que van las tropas ENEMIGAS (la celda de esta base)
-        [System.NonSerialized] public Vector2Int baseCell;
+        [System.NonSerialized] public Vector2Int baseCell;     // Celda de la esquina inferior izquierda de la base (2x2)
         [System.NonSerialized] public bool hasBaseCell;
     }
 
@@ -73,16 +76,18 @@ public class TroopPlacementManager : MonoBehaviour
 
     [Header("Referencias")]
     [SerializeField] private TerrainGridBaker terrain;
-    [SerializeField, Tooltip("Si se deja vac�a se usa la Main Camera.")] private Camera cam;
+    [SerializeField, Tooltip("Si se deja vacía se usa la Main Camera.")] private Camera cam;
     [SerializeField, Tooltip("Opcional: objeto padre donde se crean las tropas.")] private Transform troopsParent;
 
     [Header("Campos de los jugadores")]
-    [SerializeField, Tooltip("Solo si no hay Tilemaps de zona: l�nea que parte el mapa en dos. Vac�o = mitad de la rejilla.")]
+    [SerializeField, Tooltip("Solo si no hay Tilemaps de zona: línea que parte el mapa en dos. Vacío = mitad de la rejilla.")]
     private Transform divider;
     [SerializeField, Tooltip("Sin Tilemaps de zona: true = el jugador 1 ocupa la parte izquierda y el 2 la derecha.")]
     private bool player1OnLeft = true;
+    [SerializeField, Min(0), Tooltip("Sin Tilemaps de zona: ancho (en celdas) de la franja neutra centrada en la línea de división. Nadie puede colocar tropas ahí.")]
+    private int neutralCells = 0;
 
-    [Header("Jugadores y tropas (dise�o: J1 = 1,2,3,4 � J2 = 7,8,9,0)")]
+    [Header("Jugadores y tropas (diseño: J1 = 1,2,3,4 · J2 = 7,8,9,0)")]
     [SerializeField]
     private List<PlayerSetup> players = new()
     {
@@ -95,7 +100,7 @@ public class TroopPlacementManager : MonoBehaviour
     [Header("Cursor y rejilla")]
     [SerializeField] private Color validColor = new Color(0.2f, 1f, 0.3f, 0.5f);
     [SerializeField] private Color invalidColor = new Color(1f, 0.2f, 0.2f, 0.5f);
-    [SerializeField, Tooltip("Orden de dibujo de la rejilla. Si tapa a las tropas, b�jalo.")] private int gridSortingOrder = 20;
+    [SerializeField, Tooltip("Orden de dibujo de la rejilla. Si tapa a las tropas, bájalo.")] private int gridSortingOrder = 20;
     [SerializeField] private int cursorSortingOrder = 100;
 
     private readonly Dictionary<Vector2Int, PlacedTroop> placed = new();
@@ -109,7 +114,7 @@ public class TroopPlacementManager : MonoBehaviour
     private bool overlayDirty = true;
     private Vector2Int gridSize;
     private float cellSize;
-    private int[] zoneOwner;    // Por celda: jugador due�o del campo (-1 = de nadie)
+    private int[] zoneOwner;    // Por celda: jugador dueño del campo (-1 = de nadie)
 
     private SpriteRenderer cursor;
     private Texture2D cursorTexture;
@@ -138,13 +143,13 @@ public class TroopPlacementManager : MonoBehaviour
         if (cam == null) cam = Camera.main;
 
         if (terrain == null) Debug.LogError("[TroopPlacementManager] Falta el TerrainGridBaker.");
-        if (cam == null) Debug.LogError("[TroopPlacementManager] No hay c�mara (asigna una o etiqueta la Main Camera).");
+        if (cam == null) Debug.LogError("[TroopPlacementManager] No hay cámara (asigna una o etiqueta la Main Camera).");
         if (players.Count < 2) Debug.LogWarning("[TroopPlacementManager] Hacen falta 2 jugadores en la lista.");
 
         foreach (var p in players)
         {
-            if (p.baseTransform == null)
-                Debug.LogWarning($"[TroopPlacementManager] {p.name} no tiene Base: las tropas enemigas no tendr�n a d�nde ir.");
+            if (p.basePrefab == null && p.baseTransform == null)
+                Debug.LogWarning($"[TroopPlacementManager] {p.name} no tiene Base Prefab: las tropas enemigas no tendrán a dónde ir.");
 
             foreach (var o in p.troops)
             {
@@ -174,26 +179,45 @@ public class TroopPlacementManager : MonoBehaviour
         gridSize = terrain.GridSize;
         cellSize = terrain.CellSize;
 
-        // Due�o del campo de cada celda (no cambia durante la partida)
+        // Dueño del campo de cada celda (no cambia durante la partida)
         zoneOwner = new int[gridSize.x * gridSize.y];
         for (int y = 0; y < gridSize.y; y++)
             for (int x = 0; x < gridSize.x; x++)
                 zoneOwner[y * gridSize.x + x] = ComputeZoneOwner(new Vector2Int(x, y));
 
-        // Celda inicial de cada base y punto al que ir�n las tropas enemigas
-        foreach (var p in players)
+        // Celda inicial de cada base y punto al que irán las tropas enemigas
+        for (int pi = 0; pi < players.Count; pi++)
         {
+            var p = players[pi];
             var go = new GameObject($"Objetivo {p.name}");
             p.targetPoint = go.transform;
 
-            if (p.baseTransform != null)
+            if (p.basePrefab != null)
+            {
+                // La torre del prefab es la base: se crea en el centro del campo del jugador
+                if (FindStartCell(pi, out Vector2Int start))
+                {
+                    var tower = Instantiate(p.basePrefab, BaseCenter(start), p.basePrefab.transform.rotation, troopsParent);
+                    tower.name = $"Base {p.name}";
+                    p.baseTransform = tower.transform;
+                    MoveBase(pi, start);
+                }
+                else
+                {
+                    Debug.LogWarning($"[TroopPlacementManager] No hay celdas libres en el campo de {p.name} para su base.");
+                }
+            }
+            else if (p.baseTransform != null)
             {
                 go.transform.position = p.baseTransform.position;
-                if (terrain.TryWorldToCell(p.baseTransform.position, out Vector2Int c))
+
+                // La torre de la escena se ajusta al bloque de 2x2 celdas más cercano a su posición
+                Vector3 shifted = p.baseTransform.position - new Vector3(BaseShift, BaseShift, 0f);
+                if (terrain.TryWorldToCell(shifted, out Vector2Int c))
                 {
                     p.baseCell = c;
                     p.hasBaseCell = true;
-                    go.transform.position = terrain.CellToWorld(c);
+                    MoveBase(pi, c);
                 }
             }
         }
@@ -223,10 +247,10 @@ public class TroopPlacementManager : MonoBehaviour
         overlay.enabled = true;
         if (overlayDirty) RebuildOverlay();
 
-        // Celda bajo el rat�n (ignorando el panel de la interfaz)
+        // Celda bajo el ratón (ignorando el panel de la interfaz)
         Vector2 mouse = PlacementInput.MousePosition;
         Vector2Int cell = default;
-        bool hasCell = !IsOverUi(mouse) && TryGetCell(mouse, out cell);
+        bool hasCell = !IsOverUi(mouse) && TryGetCell(mouse, activeOption < 0 ? BaseShift : 0f, out cell);
 
         if (!hasCell)
         {
@@ -235,7 +259,7 @@ public class TroopPlacementManager : MonoBehaviour
         }
 
         bool canPlace = CanPlace(activePlayer, cell, out string reason);
-        ShowCursor(cell, canPlace);
+        ShowCursor(cell, canPlace, activeOption < 0 ? BaseSize : 1);
 
         if (PlacementInput.LeftClick)
         {
@@ -257,7 +281,7 @@ public class TroopPlacementManager : MonoBehaviour
     }
 
     // ------------------------------------------------------------------
-    //  Selecci�n
+    //  Selección
     // ------------------------------------------------------------------
 
     private void HandleSelectionKeys()
@@ -303,11 +327,14 @@ public class TroopPlacementManager : MonoBehaviour
         }
         if (anyZone) return -1;
 
-        // 2) Sin zonas: el mapa se parte en dos por una l�nea vertical
+        // 2) Sin zonas: el mapa se parte en dos por una línea vertical
         if (players.Count < 2) return -1;
         float splitX = divider != null
             ? divider.position.x
             : terrain.Origin.x + gridSize.x * cellSize * 0.5f;
+
+        // Franja neutra en el centro: nadie puede colocar ahí
+        if (Mathf.Abs(center.x - splitX) < neutralCells * cellSize * 0.5f) return -1;
 
         bool isLeft = center.x < splitX;
         return isLeft == player1OnLeft ? 0 : 1;
@@ -320,19 +347,105 @@ public class TroopPlacementManager : MonoBehaviour
         return zoneOwner[cell.y * gridSize.x + cell.x];
     }
 
-    private bool IsOccupied(Vector2Int cell)
+    private static bool BaseCovers(PlayerSetup p, Vector2Int cell)
+    {
+        return p.hasBaseCell
+            && cell.x >= p.baseCell.x && cell.x < p.baseCell.x + BaseSize
+            && cell.y >= p.baseCell.y && cell.y < p.baseCell.y + BaseSize;
+    }
+
+    /// <summary>Hay una tropa o alguna base. Con ignorePlayer se ignora la base de ese jugador (al moverla).</summary>
+    private bool IsOccupied(Vector2Int cell, int ignorePlayer = -1)
     {
         if (placed.TryGetValue(cell, out var troop) && troop.go != null) return true;
 
-        foreach (var p in players)
-            if (p.hasBaseCell && p.baseCell == cell) return true;
+        for (int i = 0; i < players.Count; i++)
+            if (i != ignorePlayer && BaseCovers(players[i], cell)) return true;
 
         return false;
     }
 
-    private bool TryGetCell(Vector2 screen, out Vector2Int cell)
+    /// <summary>Desplazamiento del centro del bloque de la base respecto al centro de su celda inicial.</summary>
+    private float BaseShift => (BaseSize - 1) * cellSize * 0.5f;
+
+    /// <summary>Centro en el mundo del bloque de 2x2 celdas cuya esquina inferior izquierda es anchor.</summary>
+    private Vector3 BaseCenter(Vector2Int anchor)
+    {
+        Vector3 c = terrain.CellToWorld(anchor);
+        return new Vector3(c.x + BaseShift, c.y + BaseShift, c.z);
+    }
+
+    /// <summary>Comprueba que las 4 celdas de la base son caminables, del campo del jugador y están libres.</summary>
+    private bool CanPlaceBase(int player, Vector2Int anchor, out string reason)
+    {
+        reason = "";
+        for (int dy = 0; dy < BaseSize; dy++)
+        {
+            for (int dx = 0; dx < BaseSize; dx++)
+            {
+                var c = new Vector2Int(anchor.x + dx, anchor.y + dy);
+
+                if (GetOwner(c) != player)
+                {
+                    reason = $"La base (2x2) tiene que caber entera en el campo de {players[player].name}";
+                    return false;
+                }
+                if (!terrain.IsWalkable(c))
+                {
+                    reason = "Alguna de las 4 celdas de la base no es caminable";
+                    return false;
+                }
+                if (IsOccupied(c, player))
+                {
+                    reason = "Alguna de las 4 celdas de la base está ocupada";
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /// <summary>Esquina inferior izquierda de un bloque libre de 2x2 celdas lo más cerca posible del centro del campo del jugador.</summary>
+    private bool FindStartCell(int player, out Vector2Int result)
+    {
+        result = default;
+
+        Vector2 sum = Vector2.zero;
+        int count = 0;
+        for (int y = 0; y < gridSize.y; y++)
+        {
+            for (int x = 0; x < gridSize.x; x++)
+            {
+                var c = new Vector2Int(x, y);
+                if (GetOwner(c) != player || !terrain.IsWalkable(c)) continue;
+                sum += new Vector2(x, y);
+                count++;
+            }
+        }
+        if (count == 0) return false;
+
+        Vector2 centre = sum / count;
+        float best = float.MaxValue;
+        bool found = false;
+
+        for (int y = 0; y < gridSize.y; y++)
+        {
+            for (int x = 0; x < gridSize.x; x++)
+            {
+                var c = new Vector2Int(x, y);
+                if (!CanPlaceBase(player, c, out _)) continue;
+
+                float d = (new Vector2(x, y) + Vector2.one * ((BaseSize - 1) * 0.5f) - centre).sqrMagnitude;
+                if (d < best) { best = d; result = c; found = true; }
+            }
+        }
+        return found;
+    }
+
+    private bool TryGetCell(Vector2 screen, float shift, out Vector2Int cell)
     {
         Vector3 world = cam.ScreenToWorldPoint(new Vector3(screen.x, screen.y, Mathf.Abs(cam.transform.position.z)));
+        world -= new Vector3(shift, shift, 0f); // Para la base: el ratón queda en el centro del bloque 2x2
         return terrain.TryWorldToCell(world, out cell);
     }
 
@@ -348,7 +461,9 @@ public class TroopPlacementManager : MonoBehaviour
 
         var p = players[player];
 
-        if (activeOption >= 0 && (activeOption >= p.troops.Count || p.troops[activeOption].prefab == null))
+        if (activeOption < 0) return CanPlaceBase(player, cell, out reason);
+
+        if (activeOption >= p.troops.Count || p.troops[activeOption].prefab == null)
         {
             reason = "Esa tropa no tiene prefab";
             return false;
@@ -360,19 +475,19 @@ public class TroopPlacementManager : MonoBehaviour
         }
         if (GetOwner(cell) != player)
         {
-            reason = $"Esa celda no est� en el campo de {p.name}";
+            reason = $"Esa celda no está en el campo de {p.name}";
             return false;
         }
         if (IsOccupied(cell))
         {
-            reason = "Esa celda ya est� ocupada";
+            reason = "Esa celda ya está ocupada";
             return false;
         }
         return true;
     }
 
     // ------------------------------------------------------------------
-    //  Colocaci�n
+    //  Colocación
     // ------------------------------------------------------------------
 
     private void Place(int player, int optionIndex, Vector2Int cell)
@@ -395,16 +510,19 @@ public class TroopPlacementManager : MonoBehaviour
     private void MoveBase(int player, Vector2Int cell)
     {
         var p = players[player];
-        Vector3 center = terrain.CellToWorld(cell);
+        Vector3 center = BaseCenter(cell);
 
         if (p.baseTransform != null)
         {
-            p.baseTransform.position = new Vector3(center.x + p.baseOffset.x, center.y + p.baseOffset.y, p.baseTransform.position.z);
+            p.baseTransform.position = new Vector3(
+                center.x + p.baseOffset.x,
+                center.y + p.baseOffset.y,
+                p.baseTransform.position.z);
         }
 
         p.baseCell = cell;
         p.hasBaseCell = true;
-        p.targetPoint.position = center; // Las tropas enemigas ir�n a esta celda
+        p.targetPoint.position = center; // Las tropas enemigas irán al centro de la base
     }
 
     private void Remove(Vector2Int cell)
@@ -452,14 +570,13 @@ public class TroopPlacementManager : MonoBehaviour
             // Cada tropa va directa a la base del otro jugador
             int enemy = (troop.player + 1) % players.Count;
             controller.Waypoint = players[enemy].targetPoint;
-
             controller.enabled = true; // Su Start() lanza el WalkState
         }
 
         phase = Phase.Battle;
     }
 
-    /// <summary>Borra el combate y vuelve a crear la misma formaci�n, lista para otra prueba.</summary>
+    /// <summary>Borra el combate y vuelve a crear la misma formación, lista para otra prueba.</summary>
     private void ResetToPlacement()
     {
         var layout = new List<(Vector2Int cell, int player, int option)>();
@@ -504,7 +621,7 @@ public class TroopPlacementManager : MonoBehaviour
         cursorTexture.SetPixel(0, 0, Color.white);
         cursorTexture.Apply();
 
-        // 1 p�xel por unidad: el sprite mide 1x1 unidades y se escala al tama�o de celda
+        // 1 píxel por unidad: el sprite mide 1x1 unidades y se escala al tamaño de celda
         var sprite = Sprite.Create(cursorTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 1f);
 
         var go = new GameObject("PlacementCursor");
@@ -514,11 +631,13 @@ public class TroopPlacementManager : MonoBehaviour
         cursor.enabled = false;
     }
 
-    private void ShowCursor(Vector2Int cell, bool valid)
+    private void ShowCursor(Vector2Int cell, bool valid, int size)
     {
         cursor.enabled = true;
-        cursor.transform.position = terrain.CellToWorld(cell);
-        cursor.transform.localScale = Vector3.one * cellSize * 0.92f;
+        Vector3 pos = terrain.CellToWorld(cell);
+        float shift = (size - 1) * cellSize * 0.5f;
+        cursor.transform.position = new Vector3(pos.x + shift, pos.y + shift, pos.z);
+        cursor.transform.localScale = Vector3.one * cellSize * (size - 0.08f);
         cursor.color = valid ? validColor : invalidColor;
     }
 
@@ -533,7 +652,7 @@ public class TroopPlacementManager : MonoBehaviour
             wrapMode = TextureWrapMode.Clamp
         };
 
-        // CellPixels p�xeles por celda: la textura cubre justo la rejilla del baker
+        // CellPixels píxeles por celda: la textura cubre justo la rejilla del baker
         var sprite = Sprite.Create(overlayTexture, new Rect(0, 0, w, h), Vector2.zero, CellPixels / cellSize);
 
         var go = new GameObject("PlacementGrid");
@@ -545,7 +664,7 @@ public class TroopPlacementManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Dibuja el campo de cada jugador con su color (tenue) y, m�s intenso y con borde,
+    /// Dibuja el campo de cada jugador con su color (tenue) y, más intenso y con borde,
     /// las celdas donde el jugador activo puede colocar ahora.
     /// </summary>
     private void RebuildOverlay()
@@ -564,7 +683,7 @@ public class TroopPlacementManager : MonoBehaviour
                 int owner = zoneOwner[cy * gridSize.x + cx];
                 if (owner < 0 || owner >= players.Count || !terrain.IsWalkable(cell)) continue;
 
-                bool highlighted = owner == activePlayer && !IsOccupied(cell);
+                bool highlighted = owner == activePlayer && !IsOccupied(cell, activeOption < 0 ? activePlayer : -1);
                 Color c = players[owner].color;
                 byte r = ToByte(c.r), g = ToByte(c.g), b = ToByte(c.b);
                 byte fill = ToByte(highlighted ? 0.35f : 0.10f);
@@ -609,7 +728,7 @@ public class TroopPlacementManager : MonoBehaviour
     private void OnGUI()
     {
         Matrix4x4 previousMatrix = GUI.matrix;
-        uiScale = Mathf.Max(0.5f, Screen.height / 1080f); // Legible tambi�n en pantallas 4K
+        uiScale = Mathf.Max(0.5f, Screen.height / 1080f); // Legible también en pantallas 4K
         GUI.matrix = Matrix4x4.Scale(new Vector3(uiScale, uiScale, 1f));
 
         bool placing = phase == Phase.Placement;
@@ -621,8 +740,8 @@ public class TroopPlacementManager : MonoBehaviour
         GUILayout.BeginArea(panelRect, GUI.skin.box);
 
         GUILayout.Label(placing
-            ? "COLOCACI�N � tecla = elegir tropa � clic izquierdo = colocar en tu campo � clic derecho = quitar"
-            : "COMBATE EN CURSO � R = volver a colocar con la misma formaci�n");
+            ? "COLOCACIÓN · tecla = elegir tropa · clic izquierdo = colocar en tu campo · clic derecho = quitar"
+            : "COMBATE EN CURSO · R = volver a colocar con la misma formación");
 
         if (placing)
         {
@@ -636,12 +755,12 @@ public class TroopPlacementManager : MonoBehaviour
                 for (int oi = 0; oi < p.troops.Count; oi++)
                 {
                     bool on = activePlayer == pi && activeOption == oi;
-                    string label = $"{KeyLabel(p.troops[oi].key)} � {p.troops[oi].label}";
+                    string label = $"{KeyLabel(p.troops[oi].key)} · {p.troops[oi].label}";
                     if (GUILayout.Toggle(on, label, GUI.skin.button) && !on) Select(pi, oi);
                 }
 
                 bool baseOn = activePlayer == pi && activeOption == -1;
-                string baseLabel = p.baseKey == PlacementKey.None ? "Mover base" : $"{KeyLabel(p.baseKey)} � Mover base";
+                string baseLabel = p.baseKey == PlacementKey.None ? "Mover base" : $"{KeyLabel(p.baseKey)} · Mover base";
                 if (GUILayout.Toggle(baseOn, baseLabel, GUI.skin.button) && !baseOn) Select(pi, -1);
 
                 GUILayout.EndHorizontal();
@@ -652,7 +771,7 @@ public class TroopPlacementManager : MonoBehaviour
         GUI.enabled = placing;
         if (GUILayout.Button("Empezar combate (Enter)")) pendingAction = UiAction.Start;
         GUI.enabled = true;
-        if (GUILayout.Button("Reiniciar misma formaci�n (R)")) pendingAction = UiAction.Reset;
+        if (GUILayout.Button("Reiniciar misma formación (R)")) pendingAction = UiAction.Reset;
         if (GUILayout.Button("Vaciar")) pendingAction = UiAction.Clear;
         GUILayout.EndHorizontal();
 
@@ -664,7 +783,7 @@ public class TroopPlacementManager : MonoBehaviour
     }
 }
 
-/// <summary>Rat�n y teclado que funcionan con el Input Manager antiguo y con el nuevo Input System.</summary>
+/// <summary>Ratón y teclado que funcionan con el Input Manager antiguo y con el nuevo Input System.</summary>
 internal static class PlacementInput
 {
 #if ENABLE_LEGACY_INPUT_MANAGER
@@ -674,7 +793,7 @@ internal static class PlacementInput
     {
         if (!cache.TryGetValue(key, out KeyCode code))
         {
-            // En el Input Manager antiguo los d�gitos se llaman Alpha0..Alpha9
+            // En el Input Manager antiguo los dígitos se llaman Alpha0..Alpha9
             string name = key.ToString().Replace("Digit", "Alpha");
             if (!System.Enum.TryParse<KeyCode>(name, out code)) code = KeyCode.None;
             cache[key] = code;

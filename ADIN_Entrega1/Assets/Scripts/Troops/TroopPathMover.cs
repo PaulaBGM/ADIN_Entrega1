@@ -12,6 +12,8 @@ public class TroopPathMover : MonoBehaviour
     [SerializeField] private float speed = 2f;               // Unidades de mundo por segundo
     [SerializeField] private float nodeTolerance = 0.03f;    // Distancia para dar un nodo por alcanzado
     [SerializeField] private bool flipSpriteByDirection = true; // Asume que el sprite mira a la derecha
+    [SerializeField, Tooltip("Girar con la escala X del objeto del sprite (Visual) en vez de flipX. Así el hitbox del ataque también se gira con la tropa.")]
+    private bool mirrorWithScale = true;
 
     private List<Vector3> path;
     private int index;
@@ -24,6 +26,16 @@ public class TroopPathMover : MonoBehaviour
     {
         if (grid == null) grid = FindFirstObjectByType<PathfindingGridBuilder>();
         sprite = GetComponentInChildren<SpriteRenderer>();
+
+        // Si el prefab tiene Flip X marcado (p. ej. el equipo que mira a la izquierda),
+        // lo pasamos a la escala para no girar dos veces.
+        if (mirrorWithScale && sprite != null && sprite.flipX)
+        {
+            sprite.flipX = false;
+            Vector3 scale = sprite.transform.localScale;
+            scale.x = -Mathf.Abs(scale.x);
+            sprite.transform.localScale = scale;
+        }
     }
 
     /// <summary>Calcula un camino hasta destination y empieza a seguirlo. Devuelve false si no hay camino.</summary>
@@ -35,7 +47,17 @@ public class TroopPathMover : MonoBehaviour
             return false;
         }
 
-        if (!grid.IsBuilt) grid.Build();
+        // Con Collision Type = Custom la rejilla la construye el TerrainGridBaker: no llamar a Build()
+        if (!grid.IsBuilt && grid.CollisionSettings.CollisionType != ECollisionType.Custom)
+            grid.Build();
+
+        if (!grid.IsBuilt)
+        {
+            Debug.LogWarning($"[{name}] La rejilla no está construida. Con Collision Type = Custom necesitas un " +
+                             "TerrainGridBaker en la escena con al menos un Tilemap asignado (mira su aviso en la consola).");
+            IsMoving = false;
+            return false;
+        }
 
         var config = new PathConfig
         {
@@ -49,6 +71,11 @@ public class TroopPathMover : MonoBehaviour
         if (path == null || path.Count == 0)
         {
             IsMoving = false;
+            if (Time.time >= nextDiagnostic)
+            {
+                nextDiagnostic = Time.time + 2f; // No spamear la consola
+                Debug.LogWarning($"[{name}] Sin camino. Inicio: {Describe(transform.position)} | Destino: {Describe(destination)}");
+            }
             return false;
         }
 
@@ -70,6 +97,21 @@ public class TroopPathMover : MonoBehaviour
     {
         IsMoving = false;
         path = null;
+    }
+
+    private float nextDiagnostic;
+
+    /// <summary>Texto de diagnóstico: celda, si está dentro de la rejilla y si es caminable.</summary>
+    private string Describe(Vector3 world)
+    {
+        var tg = grid.Grid;
+        Vector3 local = grid.transform.InverseTransformPoint(world) - grid.LocalLeftCorner;
+        bool inside = local.x >= 0 && local.y >= 0 &&
+                      local.x < tg.Size.x * grid.CellSize && local.y < tg.Size.y * grid.CellSize;
+
+        var cell = grid.GetGridPosition(world);
+        string walk = inside ? (tg.IsTraversable(cell) ? "caminable" : "BLOQUEADA") : "FUERA DE LA REJILLA";
+        return $"pos ({world.x:0.0}, {world.y:0.0}) celda ({cell.x}, {cell.y}) -> {walk}";
     }
 
     /// <summary>Girar el sprite hacia un punto (para el ataque, cuando está parada).</summary>
@@ -103,6 +145,18 @@ public class TroopPathMover : MonoBehaviour
     private void Flip(float dirX)
     {
         if (!flipSpriteByDirection || sprite == null || Mathf.Abs(dirX) < 0.0001f) return;
-        sprite.flipX = dirX < 0f;
+
+        if (mirrorWithScale)
+        {
+            Transform visual = sprite.transform;
+            Vector3 scale = visual.localScale;
+            float sign = dirX < 0f ? -1f : 1f;
+            if (!Mathf.Approximately(Mathf.Sign(scale.x), sign))
+            {
+                scale.x = -scale.x;
+                visual.localScale = scale;
+            }
+        }
+        else sprite.flipX = dirX < 0f;
     }
 }

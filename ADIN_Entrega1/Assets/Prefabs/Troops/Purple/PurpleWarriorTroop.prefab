@@ -65,6 +65,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   timeToDestroy: 2
+  hurtClipKeyword: Hitted
+  hurtMaxTime: 1
   _eventManagerSo: {fileID: 11400000, guid: 5b95c78fca4da0b47a12da9ce1327f4e, type: 2}
   stats: {fileID: 11400000, guid: 477053ff09d8af64098131b0a2942f92, type: 2}
   defaultWaypoint: {fileID: 0}
@@ -112,6 +114,7 @@ MonoBehaviour:
   speed: 2
   nodeTolerance: 0.03
   flipSpriteByDirection: 1
+  mirrorWithScale: 1
 --- !u!114 &1393236763314521183
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -126,6 +129,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   alternateAttackAnimations: 1
   useDirectionalAttackAnimation: 0
+  animationFallbackTime: 1
+  debugCooldown: 1
+  debugInterval: 0.25
 --- !u!1 &5634924489831744605
 GameObject:
   m_ObjectHideFlags: 0
@@ -152,7 +158,7 @@ Transform:
   m_GameObject: {fileID: 5634924489831744605}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.39, y: -0.33, z: 0}
+  m_LocalPosition: {x: 0.68, y: -0.33, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
