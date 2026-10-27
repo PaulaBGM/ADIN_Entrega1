@@ -1,3 +1,4 @@
+using System;
 using FSM.Enemy;
 using UnityEngine;
 
@@ -164,9 +165,7 @@ public class AttackState : States<TroopController>, ITroopAttack
         if (direction.sqrMagnitude <= 0.001f) return Vector2.down;
 
         direction.Normalize();
-        return Mathf.Abs(direction.x) > Mathf.Abs(direction.y)
-            ? new Vector2(Mathf.Sign(direction.x), 0f)
-            : new Vector2(0f, Mathf.Sign(direction.y));
+        return Mathf.Abs(direction.x) > Mathf.Abs(direction.y) ? new Vector2(Mathf.Sign(direction.x), 0f) : new Vector2(0f, Mathf.Sign(direction.y));
     }
 
     public void ApplyAttackDamage() { }
