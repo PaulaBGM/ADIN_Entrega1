@@ -15,6 +15,8 @@ namespace FSM.Enemy
         private float hurtMaxTime = 1f;
 
         private Coroutine hurtRoutine;
+        private int attack1State;
+        private int attack2State;
         [SerializeField] private EventManagerSO _eventManagerSo;
         [SerializeField] private TroopStats stats;
         [SerializeField] private Transform defaultWaypoint;
@@ -56,6 +58,7 @@ namespace FSM.Enemy
 
             Mover = GetComponent<TroopPathMover>();
             Animator = GetComponentInChildren<Animator>();
+            CacheAttackStates();
             _healthSystem = GetComponent<HealthSystem>();
 
             IdleState = GetComponent<IdleState>();
@@ -236,11 +239,44 @@ namespace FSM.Enemy
             if (HasAnimatorParameter("isAttacking2", AnimatorControllerParameterType.Bool))
                 Animator.SetBool(IsAttacking2Hash, attacking && secondAttack);
 
+            // El giro a la izquierda ya lo hace TroopPathMover (escala X de Visual, hitbox incluido),
+            // así que el Blend Tree solo necesita el clip de la derecha.
+            if (Mover != null && Mover.MirrorsWithScale) direction.x = Mathf.Abs(direction.x);
+
             if (HasAnimatorParameter("DirectionX", AnimatorControllerParameterType.Float))
                 Animator.SetFloat(DirectionXHash, direction.x);
 
             if (HasAnimatorParameter("DirectionY", AnimatorControllerParameterType.Float))
                 Animator.SetFloat(DirectionYHash, direction.y);
+
+            if (attacking) ForceAttackState(secondAttack);
+        }
+
+        // Los clips de ataque se localizan por el nombre ("Attack1" / "Attack2").
+        private void CacheAttackStates()
+        {
+            if (Animator == null || Animator.runtimeAnimatorController == null) return;
+
+            foreach (AnimationClip clip in Animator.runtimeAnimatorController.animationClips)
+            {
+                if (clip.name.Contains("Attack2")) attack2State = Animator.StringToHash(clip.name);
+                else if (clip.name.Contains("Attack1")) attack1State = Animator.StringToHash(clip.name);
+            }
+
+            // Lancero: el ataque es un Blend Tree llamado "AttackBT" (4 direcciones)
+            int blendTree = Animator.StringToHash("AttackBT");
+            if (attack1State == 0 && Animator.HasState(0, blendTree)) attack1State = blendTree;
+        }
+
+        // Entra directamente en el estado de ataque aunque el Animator esté en Guard
+        // (no hay transición Guard -> Attack).
+        private void ForceAttackState(bool secondAttack)
+        {
+            int hash = secondAttack ? attack2State : attack1State;
+            if (hash == 0 || !Animator.HasState(0, hash)) return;
+            if (Animator.GetCurrentAnimatorStateInfo(0).shortNameHash == hash) return;
+
+            Animator.CrossFadeInFixedTime(hash, 0f);
         }
 
         public void TriggerHealAnimation()

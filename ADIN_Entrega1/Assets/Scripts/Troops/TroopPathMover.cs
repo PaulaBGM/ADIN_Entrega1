@@ -21,6 +21,7 @@ public class TroopPathMover : MonoBehaviour
 
     public bool IsMoving { get; private set; }
     public float Speed { get => speed; set => speed = value; }
+    public bool MirrorsWithScale => flipSpriteByDirection && mirrorWithScale;
 
     private void Awake()
     {
