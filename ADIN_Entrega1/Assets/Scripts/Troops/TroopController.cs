@@ -14,6 +14,10 @@ namespace FSM.Enemy
         [SerializeField, Tooltip("Tiempo máximo de hurt por si algo falla.")]
         private float hurtMaxTime = 1f;
 
+        [Header("Ataque direccional (lancero)")]
+        [SerializeField, Tooltip("La tropa se gira con la escala X, así que un ataque a la izquierda ya sale reflejado. Con esto DirectionX es siempre +1 (derecha) en horizontal y el Blend Tree solo necesita el clip Right.")]
+        private bool horizontalAttackAlwaysRight = false;
+
         private Coroutine hurtRoutine;
         private int attack1State;
         private int attack2State;
@@ -242,6 +246,8 @@ namespace FSM.Enemy
             // El giro a la izquierda ya lo hace TroopPathMover (escala X de Visual, hitbox incluido),
             // así que el Blend Tree solo necesita el clip de la derecha.
             if (Mover != null && Mover.MirrorsWithScale) direction.x = Mathf.Abs(direction.x);
+
+            if (horizontalAttackAlwaysRight) direction.x = Mathf.Abs(direction.x);
 
             if (HasAnimatorParameter("DirectionX", AnimatorControllerParameterType.Float))
                 Animator.SetFloat(DirectionXHash, direction.x);
