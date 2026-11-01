@@ -1,5 +1,67 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &672305023461138534
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1471635605357224188}
+  m_Layer: 6
+  m_Name: DustSystemPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1471635605357224188
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 672305023461138534}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.41, y: -0.49, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1893067272288302228}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &3416665205106405723
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8307540014180978535}
+  m_Layer: 6
+  m_Name: HitSystemPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8307540014180978535
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3416665205106405723}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.95, y: -0.463, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8969055535107240566}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &4372205635453903332
 GameObject:
   m_ObjectHideFlags: 0
@@ -31,12 +93,14 @@ Transform:
   m_GameObject: {fileID: 4372205635453903332}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -3.07, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8969055535107240566}
   - {fileID: 2573013814980831700}
+  - {fileID: 8035187336137787624}
+  - {fileID: 1471635605357224188}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &3017280963822318098
@@ -52,6 +116,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxHealth: 100
+  damageParticlesPrefab: {fileID: 4050536380583225070, guid: e3c25a30516f335448d2a5a057b6322a, type: 3}
+  healParticlesPrefab: {fileID: 3656964930864936805, guid: 027dd3836e3def345a3ef79aaae6c816, type: 3}
+  particleSpawnPoint: {fileID: 8035187336137787624}
+  knockbackDistance: 0.15
+  knockbackDuration: 0.1
 --- !u!114 &5939017069211247491
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -67,6 +136,7 @@ MonoBehaviour:
   timeToDestroy: 2
   hurtClipKeyword: Hitted
   hurtMaxTime: 1
+  horizontalAttackAlwaysRight: 0
   _eventManagerSo: {fileID: 11400000, guid: 5b95c78fca4da0b47a12da9ce1327f4e, type: 2}
   stats: {fileID: 11400000, guid: 477053ff09d8af64098131b0a2942f92, type: 2}
   defaultWaypoint: {fileID: 0}
@@ -98,6 +168,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 8
   checkInterval: 0.25
+  spriteInterval: 0.4
+  spriteSpawnPoint: {fileID: 1471635605357224188}
 --- !u!114 &4632350461045238258
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -115,6 +187,7 @@ MonoBehaviour:
   nodeTolerance: 0.03
   flipSpriteByDirection: 1
   mirrorWithScale: 1
+  artFacesLeft: 0
 --- !u!114 &1393236763314521183
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -210,6 +283,37 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1.36, y: 1}
   m_EdgeRadius: 0
+--- !u!1 &7445729136814221524
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8035187336137787624}
+  m_Layer: 6
+  m_Name: BloodSystemPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8035187336137787624
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7445729136814221524}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.034, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1893067272288302228}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8527485721395781961
 GameObject:
   m_ObjectHideFlags: 0
@@ -245,6 +349,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7055718967710240489}
+  - {fileID: 8307540014180978535}
   m_Father: {fileID: 1893067272288302228}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &9184393139193457384
@@ -374,6 +479,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   attackCollider: {fileID: 7482247458525735972}
+  hitPoint: {fileID: 8307540014180978535}
+  hitPointOffset: {x: 0, y: 0, z: 0}
 --- !u!50 &629218791575096789
 Rigidbody2D:
   serializedVersion: 5

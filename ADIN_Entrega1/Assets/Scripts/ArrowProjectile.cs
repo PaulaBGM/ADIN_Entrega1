@@ -1,11 +1,10 @@
-
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class ArrowProjectile : MonoBehaviour
 {
     [SerializeField] private float lifeTime = 5f;
-
+    
     private Rigidbody2D rb;
     private float damage;
     private bool hasHit;
@@ -16,22 +15,16 @@ public class ArrowProjectile : MonoBehaviour
         rb.gravityScale = 0f;
     }
 
-    public void Initialize(
-        Vector2 direction,
-        float speed,
-        float damageAmount,
-        GameObject owner)
+    public void Initialize(Vector2 direction, float speed, float damageAmount, GameObject owner)
     {
         damage = damageAmount;
 
         // Ignorar todos los colliders de la tropa que dispara.
         if (owner != null)
         {
-            Collider2D[] ownerColliders =
-                owner.GetComponentsInChildren<Collider2D>();
+            Collider2D[] ownerColliders = owner.GetComponentsInChildren<Collider2D>();
 
-            Collider2D[] arrowColliders =
-                GetComponentsInChildren<Collider2D>();
+            Collider2D[] arrowColliders = GetComponentsInChildren<Collider2D>();
 
             foreach (Collider2D ownerCollider in ownerColliders)
             {
@@ -39,10 +32,7 @@ public class ArrowProjectile : MonoBehaviour
                 {
                     if (ownerCollider != null && arrowCollider != null)
                     {
-                        Physics2D.IgnoreCollision(
-                            arrowCollider,
-                            ownerCollider
-                        );
+                        Physics2D.IgnoreCollision(arrowCollider, ownerCollider);
                     }
                 }
             }
@@ -50,32 +40,43 @@ public class ArrowProjectile : MonoBehaviour
 
         rb.linearVelocity = direction.normalized * speed;
 
-        float angle =
-            Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
 
         transform.rotation = Quaternion.Euler(0f, 0f, angle);
 
         Destroy(gameObject, lifeTime);
     }
-
+    
     private void OnTriggerEnter2D(Collider2D other)
     {
+        
         if (hasHit)
+        {
+            Debug.LogWarning("[FLECHA] Ya había impactado. Se bloquea el daño.");
             return;
+        }
 
-        HealthSystem health =
-            other.GetComponentInParent<HealthSystem>();
+        HealthSystem health = other.GetComponentInParent<HealthSystem>();
 
-        if (health == null || health.IsDead)
+        if (health == null)
+        {
+            Debug.Log("[FLECHA] El objeto no tiene HealthSystem.");
             return;
+        }
+
+        if (health.IsDead)
+        {
+            Debug.Log("[FLECHA] El objetivo ya está muerto.");
+            return;
+        }
 
         hasHit = true;
 
-        Debug.Log(
-            $"Flecha impactó a {health.name}. Daño: {damage}"
-        );
+        Debug.LogWarning($"[DAÑO APLICADO] Flecha ID: {GetInstanceID()} | " + $"Objetivo: {health.name} | Daño: {damage}");
 
         health.TakeDamage(damage);
+
+        Debug.Log($"[FLECHA] Daño enviado. Destruyendo proyectil.");
 
         Destroy(gameObject);
     }

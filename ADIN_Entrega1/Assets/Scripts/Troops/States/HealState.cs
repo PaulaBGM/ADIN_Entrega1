@@ -1,6 +1,6 @@
 
-using FSM.Enemy;
 using UnityEngine;
+using FSM.Enemy;
 
 public class HealState : States<TroopController>
 {
@@ -13,32 +13,44 @@ public class HealState : States<TroopController>
     private float nextRepath;
     private float nextHeal;
 
-    // Indica si se está reproduciendo la animación de curar.
     private bool isHealing;
-
-    // Evita que el mismo Animation Event cure varias veces en una animación.
     private bool healApplied;
 
-    // Guarda el aliado que el monje está intentando curar.
     private Transform healTarget;
     private HealthSystem targetHealth;
 
+    private Animator animator;
+    private TroopAnimationEvents animationEvents;
+
     public override void OnEnter()
     {
-        // Reiniciar los temporizadores al entrar en el estado.
         nextCheck = 0f;
         nextRepath = 0f;
-        nextHeal = 0f;
+
         isHealing = false;
         healApplied = false;
 
         healTarget = null;
         targetHealth = null;
 
-        // Detener el movimiento y desactivar la animación de ataque o curación.
-        if (_controller.Mover != null)
-            _controller.Mover.Stop();
+        animator = _controller.GetComponentInChildren<Animator>();
 
+        animationEvents = _controller.GetComponentInChildren<TroopAnimationEvents>();
+
+        if (animationEvents != null)
+        {
+            animationEvents.HealApplied += HandleHealApplied;
+            animationEvents.HealFinished += HandleHealFinished;
+        }
+        else
+        {
+            Debug.LogError($"[{_controller.name}] No se encuentra TroopAnimationEvents.");
+        }
+
+        if (animator != null)
+            animator.SetBool("isHealing", false);
+
+        _controller.Mover.Stop();
         _controller.SetMovementSpeed(0f);
         _controller.SetAttacking(false);
     }
@@ -48,47 +60,42 @@ public class HealState : States<TroopController>
         if (_controller.Stats == null)
             return;
 
-        // Mientras se reproduce la animación, esperar al Animation Event.
         if (isHealing)
             return;
 
-        // Si el aliado ya está curado, ha muerto o no es válido, buscar otro.
         if (!IsValidTarget())
         {
             healTarget = null;
             targetHealth = null;
 
-            // Limitar la frecuencia de búsqueda para no comprobar aliados cada frame.
             if (Time.time >= nextCheck)
             {
                 nextCheck = Time.time + checkInterval;
                 FindWoundedAlly();
             }
 
-            // Si no encuentra aliados heridos, el monje permanece quieto.
             if (healTarget == null)
             {
-                if (_controller.Mover != null)
-                    _controller.Mover.Stop();
-
+                _controller.Mover.Stop();
                 _controller.SetMovementSpeed(0f);
                 _controller.SetAttacking(false);
                 return;
             }
         }
 
-        float distance = Vector2.Distance(_controller.transform.position, healTarget.position);
+        float distance = Vector2.Distance(
+            _controller.transform.position,
+            healTarget.position
+        );
 
-        // detectionRange permite encontrar aliados; healingRange determina cuándo puede curarlos.
         if (distance > _controller.Stats.healingRange)
         {
-            // Desactivar la animación de curar mientras se desplaza.
             _controller.SetAttacking(false);
 
-            // Actualizar el destino periódicamente para seguir al aliado.
-            if (Time.time >= nextRepath && _controller.Mover != null)
+            if (Time.time >= nextRepath)
             {
                 nextRepath = Time.time + repathInterval;
+
                 _controller.Mover.MoveTo(healTarget.position);
                 _controller.SetMovementSpeed(_controller.Stats.movementSpeed);
             }
@@ -96,118 +103,130 @@ public class HealState : States<TroopController>
             return;
         }
 
-        // Al llegar al alcance de curación, detenerse y mirar hacia el aliado.
-        if (_controller.Mover != null)
-        {
-            _controller.Mover.Stop();
-            _controller.Mover.FaceTowards(healTarget.position);
-        }
-
+        _controller.Mover.Stop();
         _controller.SetMovementSpeed(0f);
+        _controller.SetAttacking(false);
 
-        // Iniciar la animación únicamente cuando termina el cooldown.
         if (Time.time >= nextHeal)
-        {
-            isHealing = true;
-            healApplied = false;
-
-            // isAttacking activa la animación de curar en el Animator.
-            _controller.TriggerHealAnimation();
-
-        }
+            StartHealing();
     }
 
-    // Lo llama TroopAnimationEvents en el fotograma exacto de la curación.
-    public void ApplyHeal()
+    private void StartHealing()
     {
-        // Evitar curaciones fuera de la animación o más de una vez por ciclo.
+        if (!IsValidTarget() || isHealing)
+            return;
+
+        isHealing = true;
+        healApplied = false;
+
+        // El cooldown comienza al iniciar la animación.
+        nextHeal = Time.time + Mathf.Max(0f, _controller.Stats.healingCooldown);
+
+        if (animator != null)
+            animator.SetBool("isHealing", true);
+
+        Debug.Log($"[{_controller.name}] Ha comenzado a curar.");
+    }
+
+    // Se ejecuta cuando TroopAnimationEvents lanza HealApplied.
+    private void HandleHealApplied()
+    {
         if (!isHealing || healApplied)
             return;
 
         healApplied = true;
 
-        if (_controller.Stats == null || !IsValidTarget())
+        if (!IsValidTarget())
             return;
 
-        // Aplicar la curación definida en TroopStats.
         targetHealth.Heal(_controller.Stats.healingPower);
 
-        // El cooldown empieza en el momento real de la curación.
-        nextHeal = Time.time + _controller.Stats.healingCooldown;
+        Debug.Log($"[{_controller.name}] Ha aplicado curación.");
     }
 
-    // Lo llama TroopAnimationEvents al final del clip de curación.
-    public void FinishHeal()
+    // Se ejecuta cuando TroopAnimationEvents lanza HealFinished.
+    private void HandleHealFinished()
     {
         if (!isHealing)
             return;
 
         isHealing = false;
+
+        if (animator != null)
+            animator.SetBool("isHealing", false);
+
         _controller.SetAttacking(false);
+
+        Debug.Log($"[{_controller.name}] Ha terminado la animación de curación.");
     }
 
     private bool IsValidTarget()
     {
-        return healTarget != null && targetHealth != null && !targetHealth.IsDead && targetHealth.NeedsHealing;
+        return healTarget != null
+            && targetHealth != null
+            && !targetHealth.IsDead
+            && targetHealth.NeedsHealing;
     }
 
     private void FindWoundedAlly()
     {
-        // Buscar aliados dentro del rango de detección configurado en TroopStats.
-        Collider2D[] hits = Physics2D.OverlapCircleAll(_controller.transform.position, _controller.Stats.detectionRange, allyLayer);
+        Collider2D[] hits = Physics2D.OverlapCircleAll(
+            _controller.transform.position,
+            _controller.Stats.detectionRange,
+            allyLayer
+        );
 
-        Transform closest = null;
-        HealthSystem closestHealth = null;
-        float bestDistance = float.MaxValue;
-
-        // Obtener la salud del propio monje para evitar que se seleccione a sí mismo.
-        HealthSystem ownHealth = _controller.GetComponentInChildren<HealthSystem>();
+        float closestDistance = Mathf.Infinity;
 
         foreach (Collider2D hit in hits)
         {
-            // Buscar HealthSystem en el collider o en alguno de sus padres.
             HealthSystem health = hit.GetComponentInParent<HealthSystem>();
 
-            if (health == null || health.IsDead)
+            if (health == null)
                 continue;
 
-            // No curarse a sí mismo.
-            if (health == ownHealth)
+            if (health == _controller.GetComponent<HealthSystem>())
                 continue;
 
-            // Ignorar aliados que ya tienen la vida completa.
-            if (!health.NeedsHealing)
+            if (health.IsDead || !health.NeedsHealing)
                 continue;
 
-            // Elegir al aliado herido más cercano.
-            float distance = ((Vector2)health.transform.position - (Vector2)_controller.transform.position).sqrMagnitude;
+            float distance = Vector2.Distance(
+                _controller.transform.position,
+                health.transform.position
+            );
 
-            if (distance < bestDistance)
+            if (distance < closestDistance)
             {
-                bestDistance = distance;
-                closest = health.transform;
-                closestHealth = health;
+                closestDistance = distance;
+                healTarget = health.transform;
+                targetHealth = health;
             }
         }
-
-        // Guardar el objetivo seleccionado y su sistema de salud.
-        healTarget = closest;
-        targetHealth = closestHealth;
     }
 
     public override void OnExit()
     {
-        // Detener el movimiento y desactivar la animación al abandonar el estado.
-        if (_controller.Mover != null)
-            _controller.Mover.Stop();
+        if (animationEvents != null)
+        {
+            animationEvents.HealApplied -= HandleHealApplied;
+            animationEvents.HealFinished -= HandleHealFinished;
+        }
 
+        _controller.Mover.Stop();
         _controller.SetMovementSpeed(0f);
+        _controller.SetAttacking(false);
 
-        // Limpiar el estado para no conservar referencias antiguas.
         isHealing = false;
         healApplied = false;
+
+        if (animator != null)
+            animator.SetBool("isHealing", false);
+
         healTarget = null;
         targetHealth = null;
+
+        // No reiniciamos nextHeal.
     }
 
     private void OnDrawGizmosSelected()
@@ -215,10 +234,10 @@ public class HealState : States<TroopController>
         if (_controller == null || _controller.Stats == null)
             return;
 
-        Gizmos.color = Color.green;
+        Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(_controller.transform.position, _controller.Stats.detectionRange);
 
-        Gizmos.color = Color.cyan;
+        Gizmos.color = Color.green;
         Gizmos.DrawWireSphere(_controller.transform.position, _controller.Stats.healingRange);
     }
 }

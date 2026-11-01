@@ -1,10 +1,7 @@
 using UnityEngine;
 
 // Contiene las estadísticas configurables de un tipo de tropa.
-[CreateAssetMenu(
-    fileName = "NewTroopStats",
-    menuName = "Tropas/Estadísticas de tropa"
-)]
+[CreateAssetMenu(fileName = "NewTroopStats", menuName = "Tropas/Estadísticas de tropa" )]
 public class TroopStats : ScriptableObject
 {
     [Header("Vida")]

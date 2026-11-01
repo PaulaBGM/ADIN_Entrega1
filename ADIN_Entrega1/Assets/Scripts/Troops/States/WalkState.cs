@@ -7,12 +7,21 @@ public class WalkState : States<TroopController>
     [SerializeField] private LayerMask enemyLayer;
     [SerializeField, Min(0.01f)] private float checkInterval = 0.25f;
 
+    [Header("Sprites al caminar")]
+    [SerializeField, Min(0.05f)] private float spriteInterval = 0.4f;
+    [SerializeField] private Transform spriteSpawnPoint;
+
+    private float nextSpriteTime;
+    
     private float nextCheck;
     private bool resumeAfterHurt;
     private HealthSystem targetHealth;   // Enemigo detectado (se comprueba su distancia cada frame)
 
+    private float nextParticleTime;
+    
     public override void OnEnter()
     {
+        nextParticleTime = 0f;
         nextCheck = 0f;
         resumeAfterHurt = false;
         targetHealth = null;
@@ -46,6 +55,8 @@ public class WalkState : States<TroopController>
             resumeAfterHurt = true;
             return;
         }
+        
+        UpdateMovementSprites();
 
         if (resumeAfterHurt)
         {
@@ -190,6 +201,23 @@ public class WalkState : States<TroopController>
         return closest;
     }
 
+    private void UpdateMovementSprites()
+    {
+        if (MovementSpritePool.Instance == null)
+        {
+            return;
+        }
+
+        if (Time.time < nextSpriteTime)
+            return;
+
+        nextSpriteTime = Time.time + spriteInterval;
+
+        Vector3 spawnPosition = spriteSpawnPoint != null ? spriteSpawnPoint.position : _controller.transform.position;
+        
+        MovementSpritePool.Instance.Spawn(spawnPosition);
+    }
+    
     private void OnDrawGizmosSelected()
     {
         if (_controller == null || _controller.Stats == null)

@@ -66,9 +66,11 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 7355094088016038353}
   - {fileID: 1315235890072896730}
   - {fileID: 8390333330674505774}
   - {fileID: 1716255719983321157}
+  - {fileID: 5631076662010434257}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &2678867166000516874
@@ -84,6 +86,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxHealth: 100
+  damageParticlesPrefab: {fileID: 4050536380583225070, guid: e3c25a30516f335448d2a5a057b6322a, type: 3}
+  healParticlesPrefab: {fileID: 3656964930864936805, guid: 027dd3836e3def345a3ef79aaae6c816, type: 3}
+  particleSpawnPoint: {fileID: 5631076662010434257}
+  knockbackDistance: 0.15
+  knockbackDuration: 0.1
 --- !u!114 &2894691459134621855
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -97,6 +104,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   timeToDestroy: 2
+  hurtClipKeyword: Hitted
+  hurtMaxTime: 1
+  horizontalAttackAlwaysRight: 0
   _eventManagerSo: {fileID: 11400000, guid: 5b95c78fca4da0b47a12da9ce1327f4e, type: 2}
   stats: {fileID: 11400000, guid: 9e707d03d85e9334c980b97fcd4511a8, type: 2}
   defaultWaypoint: {fileID: 0}
@@ -116,6 +126,8 @@ MonoBehaviour:
   speed: 2
   nodeTolerance: 0.03
   flipSpriteByDirection: 1
+  mirrorWithScale: 1
+  artFacesLeft: 0
 --- !u!114 &8866351688308967337
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -159,13 +171,75 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9cd45da54e8713e47ad36459b582ff02, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  huntEnemiesAnywhere: 1
-  huntRange: 200
-  detectionRange: 5
   enemyLayer:
     serializedVersion: 2
     m_Bits: 8
   checkInterval: 0.25
+  movementSpritePrefab: {fileID: 1722837773884077143, guid: 4f8af583ff847a44bba44873cbb340a7, type: 3}
+  spriteInterval: 0.4
+  spriteSpawnPoint: {fileID: 7355094088016038353}
+--- !u!1 &1183518355127544053
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5631076662010434257}
+  m_Layer: 6
+  m_Name: ParticleSystemPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5631076662010434257
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1183518355127544053}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.04, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3175089740389788693}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &3649183143576001495
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7355094088016038353}
+  m_Layer: 6
+  m_Name: DustSystemPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7355094088016038353
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3649183143576001495}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.41, y: -0.49, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3175089740389788693}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6440409333153337722
 GameObject:
   m_ObjectHideFlags: 0

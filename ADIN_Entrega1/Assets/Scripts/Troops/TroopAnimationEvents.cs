@@ -16,16 +16,24 @@ public class TroopAnimationEvents : MonoBehaviour
     public event Action AttackFinished;
     public event Action HitFinished;
 
+    // Eventos de curación
+    public event Action HealApplied;
+    public event Action HealFinished;
+
     private void Awake()
     {
         troopController = GetComponentInParent<TroopController>();
 
-        if (attackCollider == null) attackCollider = GetComponentInChildren<BoxCollider2D>(true);
+        if (attackCollider == null)
+            attackCollider = GetComponentInChildren<BoxCollider2D>(true);
 
-        if (attackCollider != null) attackCollider.enabled = false;
-        else Debug.LogWarning($"[{name}] No se ha encontrado el collider del arma.", this);
+        if (attackCollider != null)
+            attackCollider.enabled = false;
+        else
+            Debug.LogWarning($"[{name}] No se ha encontrado el collider del arma.", this);
 
-        if (troopController == null) Debug.LogError($"[{name}] No se ha encontrado TroopController en los padres.", this);
+        if (troopController == null)
+            Debug.LogError($"[{name}] No se ha encontrado TroopController en los padres.", this);
 
         filter = new ContactFilter2D();
         filter.NoFilter();
@@ -35,7 +43,8 @@ public class TroopAnimationEvents : MonoBehaviour
     // Animation Event: comienza la ventana de impacto.
     public void StartAttackHitbox()
     {
-        if (attackCollider == null || troopController == null || troopController.IsHurt) return;
+        if (attackCollider == null || troopController == null || troopController.IsHurt)
+            return;
 
         hitDetectedThisSwing = false;
         attackCollider.enabled = true;
@@ -49,7 +58,8 @@ public class TroopAnimationEvents : MonoBehaviour
 
     public void DisableAttackHitbox()
     {
-        if (attackCollider != null) attackCollider.enabled = false;
+        if (attackCollider != null)
+            attackCollider.enabled = false;
     }
 
     // Animation Event: termina el clip de ataque.
@@ -57,24 +67,26 @@ public class TroopAnimationEvents : MonoBehaviour
     {
         DisableAttackHitbox();
 
-        if (troopController == null || troopController.AttackState == null) return;
+        if (troopController == null || troopController.AttackState == null)
+            return;
 
         troopController.AttackState.FinishAttackAnimation();
         AttackFinished?.Invoke();
     }
 
-    // El collider del arma está en un hijo (HitBox) y este script en Visual, así que Unity
-    // no siempre entrega OnTriggerEnter2D aquí. Por eso la ventana de impacto se comprueba
-    // también con un solape directo del collider.
     private void FixedUpdate()
     {
-        if (attackCollider == null || !attackCollider.enabled || hitDetectedThisSwing) return;
+        if (attackCollider == null || !attackCollider.enabled || hitDetectedThisSwing)
+            return;
 
         int count = attackCollider.Overlap(filter, results);
+
         for (int i = 0; i < count; i++)
         {
             TryHit(results[i]);
-            if (hitDetectedThisSwing) break;
+
+            if (hitDetectedThisSwing)
+                break;
         }
     }
 
@@ -85,11 +97,16 @@ public class TroopAnimationEvents : MonoBehaviour
 
     private void TryHit(Collider2D other)
     {
-        if (attackCollider == null || !attackCollider.enabled || hitDetectedThisSwing) return;
-        if (troopController == null || troopController.IsHurt || troopController.AttackState == null) return;
+        if (attackCollider == null || !attackCollider.enabled || hitDetectedThisSwing)
+            return;
+
+        if (troopController == null || troopController.IsHurt || troopController.AttackState == null)
+            return;
 
         HealthSystem health = other.GetComponentInParent<HealthSystem>();
-        if (health == null || health.IsDead) return;
+
+        if (health == null || health.IsDead)
+            return;
 
         if (troopController.AttackState.ApplyAttackDamageTo(health))
         {
@@ -101,17 +118,13 @@ public class TroopAnimationEvents : MonoBehaviour
     // Animation Event: aplica la curación.
     public void ApplyHeal()
     {
-        if (troopController == null || troopController.HealState == null) return;
-
-        troopController.HealState.ApplyHeal();
+        HealApplied?.Invoke();
     }
 
-    // Animation Event: termina la curación.
+    // Animation Event: termina la animación de curación.
     public void FinishHeal()
     {
-        if (troopController == null || troopController.HealState == null) return;
-
-        troopController.HealState.FinishHeal();
+        HealFinished?.Invoke();
     }
 
     // Animation Event: termina la animación Hurt.
@@ -126,6 +139,7 @@ public class TroopAnimationEvents : MonoBehaviour
         }
 
         Debug.Log($"[{troopController.name}] Animation Event FinishHitAnimation ejecutado.", troopController);
+
         troopController.FinishHitAnimation();
         HitFinished?.Invoke();
     }

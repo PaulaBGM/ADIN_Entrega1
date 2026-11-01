@@ -13,12 +13,14 @@ MonoBehaviour:
   m_Name: MonkTroopSO
   m_EditorClassIdentifier: 
   maxHealth: 55
+  defense: 8
   movementSpeed: 3
-  attackDamage: 0
-  attackRange: 0
+  huntEnemiesAnywhere: 1
+  huntRange: 200
+  detectionRange: 10.5
+  attackDamage: 10
+  attackRange: 1.5
   attackCooldown: 0.01
-  defense: 11
   healingPower: 20
   healingRange: 2.5
-  healingCooldown: 0.5
-  detectionRange: 10.5
+  healingCooldown: 2
