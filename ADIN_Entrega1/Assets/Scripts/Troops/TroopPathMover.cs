@@ -14,6 +14,8 @@ public class TroopPathMover : MonoBehaviour
     [SerializeField] private bool flipSpriteByDirection = true; // Asume que el sprite mira a la derecha
     [SerializeField, Tooltip("Girar con la escala X del objeto del sprite (Visual) en vez de flipX. Así el hitbox del ataque también se gira con la tropa.")]
     private bool mirrorWithScale = true;
+    [SerializeField, Tooltip("Márcalo si el arte de esta tropa mira a la IZQUIERDA de serie y camina hacia atrás (p. ej. el lancero morado).")]
+    private bool artFacesLeft = false;
 
     private List<Vector3> path;
     private int index;
@@ -152,12 +154,10 @@ public class TroopPathMover : MonoBehaviour
             Transform visual = sprite.transform;
             Vector3 scale = visual.localScale;
             float sign = dirX < 0f ? -1f : 1f;
-            if (!Mathf.Approximately(Mathf.Sign(scale.x), sign))
-            {
-                scale.x = -scale.x;
-                visual.localScale = scale;
-            }
+            if (artFacesLeft) sign = -sign;
+            scale.x = Mathf.Abs(scale.x) * sign;   // se fija siempre, sin depender del valor previo
+            visual.localScale = scale;
         }
-        else sprite.flipX = dirX < 0f;
+        else sprite.flipX = artFacesLeft ? dirX > 0f : dirX < 0f;
     }
 }

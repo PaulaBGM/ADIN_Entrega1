@@ -1,4 +1,3 @@
-using System;
 using FSM.Enemy;
 using UnityEngine;
 
@@ -165,7 +164,11 @@ public class AttackState : States<TroopController>, ITroopAttack
         if (direction.sqrMagnitude <= 0.001f) return Vector2.down;
 
         direction.Normalize();
-        return Mathf.Abs(direction.x) > Mathf.Abs(direction.y) ? new Vector2(Mathf.Sign(direction.x), 0f) : new Vector2(0f, Mathf.Sign(direction.y));
+        // Los pivotes están en los pies, así que a corta distancia dy puede ser grande aunque el
+        // enemigo esté a un lado. Se prefiere el eje horizontal salvo que el vertical domine claramente.
+        return Mathf.Abs(direction.y) > Mathf.Abs(direction.x) * 1.5f
+            ? new Vector2(0f, Mathf.Sign(direction.y))
+            : new Vector2(Mathf.Sign(direction.x), 0f);
     }
 
     public void ApplyAttackDamage() { }

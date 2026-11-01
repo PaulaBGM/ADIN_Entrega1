@@ -307,6 +307,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   timeToDestroy: 2
+  hurtClipKeyword: Hitted
+  hurtMaxTime: 1
+  horizontalAttackAlwaysRight: 0
   _eventManagerSo: {fileID: 11400000, guid: 5b95c78fca4da0b47a12da9ce1327f4e, type: 2}
   stats: {fileID: 11400000, guid: 4ca85f7a4b2a9ba45a4aeb1f0a8007c9, type: 2}
   defaultWaypoint: {fileID: 0}
@@ -354,6 +357,7 @@ MonoBehaviour:
   speed: 2
   nodeTolerance: 0.03
   flipSpriteByDirection: 1
+  mirrorWithScale: 1
 --- !u!114 &5388724382176775005
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -368,6 +372,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   alternateAttackAnimations: 0
   useDirectionalAttackAnimation: 1
+  animationFallbackTime: 1
+  debugCooldown: 1
+  debugInterval: 0.25
 --- !u!50 &3953068228211858602
 Rigidbody2D:
   serializedVersion: 5
