@@ -19,7 +19,7 @@ MonoBehaviour:
   huntRange: 200
   detectionRange: 10.5
   attackDamage: 10
-  attackRange: 1.5
+  attackRange: 5
   attackCooldown: 0.01
   healingPower: 20
   healingRange: 2.5

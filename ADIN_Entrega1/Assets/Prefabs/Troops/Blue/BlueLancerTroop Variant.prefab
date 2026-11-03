@@ -44,6 +44,14 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: -594197781322936934, guid: 2307ce0d618cb4ea2be2cb2a4148cbde, type: 3}
+    - target: {fileID: 4956658979668775876, guid: 3957f8fdc5fdda2469caa548334f721b, type: 3}
+      propertyPath: artFacesLeft
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4956658979668775876, guid: 3957f8fdc5fdda2469caa548334f721b, type: 3}
+      propertyPath: initialFacing
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5360312794802344663, guid: 3957f8fdc5fdda2469caa548334f721b, type: 3}
       propertyPath: m_Color.b
       value: 1
@@ -58,6 +66,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5388724382176775005, guid: 3957f8fdc5fdda2469caa548334f721b, type: 3}
       propertyPath: useEightDirections
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5388724382176775005, guid: 3957f8fdc5fdda2469caa548334f721b, type: 3}
+      propertyPath: mirrorLeftWithSpriteFlip
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6171200663179574743, guid: 3957f8fdc5fdda2469caa548334f721b, type: 3}

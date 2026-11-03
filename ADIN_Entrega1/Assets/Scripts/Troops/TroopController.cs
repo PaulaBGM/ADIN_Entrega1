@@ -15,7 +15,8 @@ namespace FSM.Enemy
         private float hurtMaxTime = 1f;
 
         [Header("Ataque direccional (lancero)")]
-        [SerializeField, Tooltip("La tropa se gira con la escala X, así que un ataque a la izquierda ya sale reflejado. Con esto DirectionX es siempre +1 (derecha) en horizontal y el Blend Tree solo necesita el clip Right.")]
+        [SerializeField, Tooltip("Fuerza DirectionX siempre positivo en el ataque. Normalmente se deja desactivado: " +
+                                 "la dirección la decide AttackState (opción 'Mirror Left With Sprite Flip').")]
         private bool horizontalAttackAlwaysRight = false;
 
         private Coroutine hurtRoutine;
@@ -62,6 +63,9 @@ namespace FSM.Enemy
 
             Mover = GetComponent<TroopPathMover>();
             Animator = GetComponentInChildren<Animator>();
+
+            // Debug de tiempos de combate: se añade solo para no tener que tocar los prefabs.
+            if (GetComponent<TroopCombatTimer>() == null) gameObject.AddComponent<TroopCombatTimer>();
             CacheAttackStates();
             _healthSystem = GetComponent<HealthSystem>();
 
@@ -243,10 +247,9 @@ namespace FSM.Enemy
             if (HasAnimatorParameter("isAttacking2", AnimatorControllerParameterType.Bool))
                 Animator.SetBool(IsAttacking2Hash, attacking && secondAttack);
 
-            // El giro a la izquierda ya lo hace TroopPathMover (escala X de Visual, hitbox incluido),
-            // así que el Blend Tree solo necesita el clip de la derecha.
-            if (Mover != null && Mover.MirrorsWithScale) direction.x = Mathf.Abs(direction.x);
-
+            // La dirección llega ya preparada desde AttackState (que decide si la izquierda
+            // se refleja con la escala o usa clips propios). Aquí ya NO se fuerza X positivo
+            // según el Mover: eso pisaba los clips de izquierda del lancero.
             if (horizontalAttackAlwaysRight) direction.x = Mathf.Abs(direction.x);
 
             if (HasAnimatorParameter("DirectionX", AnimatorControllerParameterType.Float))
@@ -269,7 +272,7 @@ namespace FSM.Enemy
                 else if (clip.name.Contains("Attack1")) attack1State = Animator.StringToHash(clip.name);
             }
 
-            // Lancero: el ataque es un Blend Tree llamado "AttackBT" (4 direcciones)
+            // Lancero: el ataque es un Blend Tree llamado "AttackBT" (8 direcciones)
             int blendTree = Animator.StringToHash("AttackBT");
             if (attack1State == 0 && Animator.HasState(0, blendTree)) attack1State = blendTree;
         }

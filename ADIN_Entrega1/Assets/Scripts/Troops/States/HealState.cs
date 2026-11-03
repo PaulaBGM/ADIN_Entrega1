@@ -1,230 +1,403 @@
 using UnityEngine;
 using FSM.Enemy;
 
+/// <summary>
+/// Estado del monje: cura al aliado herido más cercano. Cuando ya no quedan tropas aliadas vivas
+/// pasa a modo ataque y golpea al enemigo más cercano, con el mismo rango de detección (detectionRange)
+/// y de acción (healingRange) que al curar.
+/// Usa los Animation Events ApplyHeal / FinishHeal de TroopAnimationEvents tanto para curar como para atacar.
+/// </summary>
 public class HealState : States<TroopController>
 {
-    [Header("Detección de aliados")]
+    private enum MonkAction { None, Heal, Attack }
+
+    [Header("Detección")]
     [SerializeField] private LayerMask allyLayer;
+    [SerializeField] private LayerMask enemyLayer;
     [SerializeField] private float checkInterval = 0.25f;
     [SerializeField] private float repathInterval = 0.3f;
 
+    [Header("Ataque del monje")]
+    [SerializeField] private bool canAttack = true;
+    [Tooltip("El monje solo ataca cuando ya no queda ninguna tropa viva de su equipo (las torres/bases no cuentan).")]
+    [SerializeField] private bool attackOnlyWhenNoAllies = true;
+    [Tooltip("Radio en el que se buscan tropas aliadas vivas. Con un valor grande cubre todo el mapa.")]
+    [SerializeField] private float allyCheckRadius = 100f;
+    [Tooltip("Parámetro del Animator (Bool o Trigger) para curar.")]
+    [SerializeField] private string healAnimParam = "isHealing";
+    [Tooltip("Parámetro del Animator (Bool o Trigger) para atacar. Si el monje no tiene animación de ataque propia, " +
+             "dejad 'isHealing' y usará la de curar (con sus eventos ApplyHeal / FinishHeal).")]
+    [SerializeField] private string attackAnimParam = "isHealing";
+
     [Header("Seguridad")]
-    [Tooltip("Tiempo máximo que puede durar la curación si el Animation Event FinishHeal no llega. Ponedlo algo por encima de la duración del clip.")]
-    [SerializeField] private float healMaxDuration = 2f;
+    [Tooltip("Tiempo máximo de la animación si FinishHeal no llega. Ponedlo algo por encima de la duración del clip.")]
+    [SerializeField] private float actionMaxDuration = 2f;
 
     [Header("Debug")]
     [SerializeField] private bool debugLogs = true;
 
     private float nextCheck;
     private float nextRepath;
-    private float nextHeal;     // Cooldown: NO se reinicia al aplicar la curación ni al salir del estado.
-    private float healEndTime;  // Timeout de seguridad de la animación.
+    private float nextHeal;    // Cooldown de curar (no se reinicia al salir del estado)
+    private float nextAttack;  // Cooldown de atacar
+    private float actionEndTime;
 
-    private bool isHealing;
-    private bool healApplied;
+    private MonkAction currentAction = MonkAction.None; // Acción con la animación en curso
+    private string currentAnimParam;                    // Parámetro del Animator usado por esa acción
+    private bool effectApplied;
 
-    private Transform healTarget;
+    private Transform target;
     private HealthSystem targetHealth;
-    private HealthSystem ownHealth;
+    private MonkAction targetType = MonkAction.None;
 
+    private HealthSystem ownHealth;
     private Animator animator;
     private TroopAnimationEvents animationEvents;
+    private TroopCombatTimer combatTimer;
+    private bool attackMode;
+
+    // ---------- Ciclo del estado ----------
 
     public override void OnEnter()
     {
         nextCheck = 0f;
         nextRepath = 0f;
-
-        isHealing = false;
-        healApplied = false;
-
-        healTarget = null;
-        targetHealth = null;
+        currentAction = MonkAction.None;
+        effectApplied = false;
+        ClearTarget();
 
         ownHealth = _controller.GetComponent<HealthSystem>();
         animator = _controller.GetComponentInChildren<Animator>();
         animationEvents = _controller.GetComponentInChildren<TroopAnimationEvents>();
+        combatTimer = _controller.GetComponent<TroopCombatTimer>();
 
         if (animationEvents != null)
         {
-            // Por si OnEnter se llama dos veces sin OnExit, evitamos suscripciones duplicadas.
-            animationEvents.HealApplied -= HandleHealApplied;
-            animationEvents.HealFinished -= HandleHealFinished;
+            animationEvents.HealApplied -= HandleEffectApplied;
+            animationEvents.HealFinished -= HandleActionFinished;
+            animationEvents.HealApplied += HandleEffectApplied;
+            animationEvents.HealFinished += HandleActionFinished;
+        }
+        else Debug.LogError($"[{_controller.name}] No se encuentra TroopAnimationEvents.", _controller);
 
-            animationEvents.HealApplied += HandleHealApplied;
-            animationEvents.HealFinished += HandleHealFinished;
-        }
-        else
-        {
-            Debug.LogError($"[{_controller.name}] No se encuentra TroopAnimationEvents.", _controller);
-        }
+        _controller.HurtStarted -= HandleHurtStarted;
+        _controller.HurtStarted += HandleHurtStarted;
 
         if (allyLayer.value == 0)
             Debug.LogWarning($"[{_controller.name}] HealState: allyLayer está vacío, nunca encontrará aliados.", _controller);
+        if (canAttack && enemyLayer.value == 0)
+            Debug.LogWarning($"[{_controller.name}] HealState: enemyLayer está vacío, nunca encontrará enemigos.", _controller);
 
-        if (animator != null)
-            animator.SetBool("isHealing", false);
-
+        SetAnim(healAnimParam, false);
+        SetAnim(attackAnimParam, false);
         StopMoving();
     }
 
     public override void OnUpdate()
     {
-        if (_controller.Stats == null)
+        if (_controller.Stats == null || _controller.IsHurt)
             return;
 
-        // Mientras dura la animación no hacemos nada, salvo comprobar el timeout.
-        if (isHealing)
+        // Durante la animación solo se vigila el timeout.
+        if (currentAction != MonkAction.None)
         {
-            if (Time.time >= healEndTime)
+            if (Time.time >= actionEndTime)
             {
-                Debug.LogWarning($"[{_controller.name}] FinishHeal no ha llegado; se cierra la curación por timeout.", _controller);
-                HandleHealFinished();
+                Debug.LogWarning($"[{_controller.name}] FinishHeal no ha llegado; se cierra la acción por timeout.", _controller);
+                HandleActionFinished();
             }
             return;
+        }
+
+        // Se reevalúa cada poco, para que curar tenga prioridad sobre atacar.
+        if (Time.time >= nextCheck)
+        {
+            nextCheck = Time.time + checkInterval;
+            ChooseTarget();
         }
 
         if (!IsValidTarget())
         {
-            healTarget = null;
-            targetHealth = null;
-
-            if (Time.time >= nextCheck)
-            {
-                nextCheck = Time.time + checkInterval;
-                FindWoundedAlly();
-            }
-
-            if (healTarget == null)
-            {
-                StopMoving();
-                return;
-            }
+            ClearTarget();
+            StopMoving();
+            return;
         }
 
-        float distance = Vector2.Distance(
-            _controller.transform.position,
-            healTarget.position
-        );
+        // Curar y atacar usan el mismo rango (healingRange) y la misma detección (detectionRange).
+        float range = _controller.Stats.healingRange;
+        float distance = Vector2.Distance(_controller.transform.position, target.position);
 
-        if (distance > _controller.Stats.healingRange)
+        if (distance > range)
         {
-            _controller.SetAttacking(false);
-
             if (Time.time >= nextRepath)
             {
                 nextRepath = Time.time + repathInterval;
-
-                _controller.Mover.MoveTo(healTarget.position);
+                _controller.Mover.MoveTo(target.position);
                 _controller.SetMovementSpeed(_controller.Stats.movementSpeed);
             }
-
             return;
         }
 
         StopMoving();
+        _controller.Mover.FaceTowards(target.position);
 
-        if (Time.time >= nextHeal)
-            StartHealing();
+        if (targetType == MonkAction.Attack && combatTimer != null)
+            combatTimer.MarkInRange(target);
+
+        if (targetType == MonkAction.Heal && Time.time >= nextHeal)
+            StartAction(MonkAction.Heal);
+        else if (targetType == MonkAction.Attack && Time.time >= nextAttack)
+            StartAction(MonkAction.Attack);
     }
 
-    private void StartHealing()
+    public override void OnExit()
     {
-        if (!IsValidTarget() || isHealing)
+        if (animationEvents != null)
+        {
+            animationEvents.HealApplied -= HandleEffectApplied;
+            animationEvents.HealFinished -= HandleActionFinished;
+        }
+        _controller.HurtStarted -= HandleHurtStarted;
+
+        StopMoving();
+        SetAnim(healAnimParam, false);
+        SetAnim(attackAnimParam, false);
+
+        currentAction = MonkAction.None;
+        effectApplied = false;
+        ClearTarget();
+        // No se reinician nextHeal / nextAttack: los cooldowns se mantienen.
+    }
+
+    // ---------- Acciones ----------
+
+    private void StartAction(MonkAction action)
+    {
+        if (!IsValidTarget() || currentAction != MonkAction.None)
             return;
 
-        isHealing = true;
-        healApplied = false;
+        currentAction = action;
+        effectApplied = false;
+        actionEndTime = Time.time + Mathf.Max(0.1f, actionMaxDuration);
 
         // El cooldown empieza al iniciar la animación.
-        nextHeal = Time.time + Mathf.Max(0f, _controller.Stats.healingCooldown);
-        healEndTime = Time.time + Mathf.Max(0.1f, healMaxDuration);
+        if (action == MonkAction.Heal)
+            nextHeal = Time.time + Mathf.Max(0f, _controller.Stats.healingCooldown);
+        else
+            nextAttack = Time.time + AttackCooldown();
 
-        if (animator != null)
-            animator.SetBool("isHealing", true);
+        currentAnimParam = action == MonkAction.Heal ? healAnimParam : attackAnimParam;
+
+        // Si el Animator no tiene el parámetro de ataque, se usa el de curar
+        // (misma animación y mismos eventos ApplyHeal / FinishHeal).
+        if (action == MonkAction.Attack && !HasAnimParam(currentAnimParam))
+        {
+            Debug.LogWarning($"[{_controller.name}] El Animator no tiene '{attackAnimParam}'; el ataque usa '{healAnimParam}'.", _controller);
+            currentAnimParam = healAnimParam;
+        }
+
+        SetAnim(currentAnimParam, true);
 
         if (debugLogs)
-            Debug.Log($"[{_controller.name}] Ha comenzado a curar a {healTarget.name}. Próxima curación en {_controller.Stats.healingCooldown}s.", _controller);
+            Debug.Log($"[{_controller.name}] Empieza a {(action == MonkAction.Heal ? "curar" : "atacar")} a {target.name} (parámetro '{currentAnimParam}').", _controller);
     }
 
-    // Se ejecuta cuando TroopAnimationEvents lanza HealApplied.
-    private void HandleHealApplied()
+    private bool HasAnimParam(string param)
     {
-        if (!isHealing || healApplied)
+        if (animator == null || string.IsNullOrEmpty(param)) return false;
+        foreach (AnimatorControllerParameter p in animator.parameters)
+            if (p.name == param) return true;
+        return false;
+    }
+
+    // Animation Event ApplyHeal: aplica la curación o el daño según la acción en curso.
+    private void HandleEffectApplied()
+    {
+        if (currentAction == MonkAction.None || effectApplied)
             return;
 
-        healApplied = true;
+        effectApplied = true;
 
         if (!IsValidTarget())
             return;
 
-        targetHealth.Heal(_controller.Stats.healingPower);
-
-        if (debugLogs)
-            Debug.Log($"[{_controller.name}] Ha aplicado curación ({_controller.Stats.healingPower}) a {healTarget.name}.", _controller);
-
-        // IMPORTANTE: aquí ya NO se pone nextHeal = 0f; eso anulaba el cooldown.
+        if (currentAction == MonkAction.Heal)
+        {
+            targetHealth.Heal(_controller.Stats.healingPower);
+            if (debugLogs) Debug.Log($"[{_controller.name}] Cura {_controller.Stats.healingPower} a {target.name}.", _controller);
+        }
+        else
+        {
+            float damage = AttackDamage();
+            targetHealth.TakeDamage(damage);
+            if (debugLogs) Debug.Log($"[{_controller.name}] Golpea {damage} a {target.name}.", _controller);
+        }
     }
 
-    // Se ejecuta cuando TroopAnimationEvents lanza HealFinished (o por timeout).
-    private void HandleHealFinished()
+    // Animation Event FinishHeal (o timeout): termina la animación en curso.
+    private void HandleActionFinished()
     {
-        if (!isHealing)
+        if (currentAction == MonkAction.None)
             return;
 
-        isHealing = false;
-        healApplied = false;
+        // Si el evento ApplyHeal no llegó (clip sin evento, animación que no se reprodujo...),
+        // el efecto se aplica igualmente al terminar, para no perder la curación o el golpe.
+        if (!effectApplied)
+        {
+            Debug.LogWarning($"[{_controller.name}] No llegó el evento ApplyHeal; se aplica el efecto al terminar la acción.", _controller);
+            HandleEffectApplied();
+        }
 
-        if (animator != null)
-            animator.SetBool("isHealing", false);
-
-        _controller.SetAttacking(false);
+        SetAnim(currentAnimParam, false);
 
         if (debugLogs)
-            Debug.Log($"[{_controller.name}] Ha terminado la animación de curación.", _controller);
+            Debug.Log($"[{_controller.name}] Termina de {(currentAction == MonkAction.Heal ? "curar" : "atacar")}.", _controller);
+
+        currentAction = MonkAction.None;
+        effectApplied = false;
     }
 
-    private bool IsValidTarget()
+    // Si le golpean a mitad de la animación, se cancela. Si no llegó a aplicar el efecto,
+    // no gasta el cooldown (igual que AttackState tras Hurt).
+    private void HandleHurtStarted()
     {
-        return healTarget != null
-            && targetHealth != null
-            && !targetHealth.IsDead
-            && targetHealth.NeedsHealing;
+        if (currentAction == MonkAction.None)
+            return;
+
+        if (!effectApplied)
+        {
+            if (currentAction == MonkAction.Heal) nextHeal = Time.time;
+            else nextAttack = Time.time;
+        }
+
+        SetAnim(healAnimParam, false);
+        SetAnim(attackAnimParam, false);
+        currentAction = MonkAction.None;
+        effectApplied = false;
+
+        if (debugLogs) Debug.Log($"[{_controller.name}] Acción del monje interrumpida por daño.", _controller);
     }
 
-    private void FindWoundedAlly()
+    // ---------- Objetivos ----------
+
+    private void ChooseTarget()
     {
+        HealthSystem wounded = FindClosest(allyLayer, needsHealing: true);
+        if (wounded != null)
+        {
+            SetTarget(wounded, MonkAction.Heal);
+            return;
+        }
+
+        bool shouldAttack = canAttack && (!attackOnlyWhenNoAllies || !HasLivingAllyTroops());
+
+        if (shouldAttack != attackMode)
+        {
+            attackMode = shouldAttack;
+            if (debugLogs)
+                Debug.Log(attackMode
+                    ? $"[{_controller.name}] No quedan tropas aliadas: pasa a MODO ATAQUE."
+                    : $"[{_controller.name}] Vuelve a modo curación.", _controller);
+        }
+
+        if (attackMode)
+        {
+            HealthSystem enemy = FindClosest(enemyLayer, needsHealing: false);
+            if (enemy != null)
+            {
+                SetTarget(enemy, MonkAction.Attack);
+                return;
+            }
+        }
+
+        ClearTarget();
+    }
+
+    // ¿Queda alguna TROPA viva de su equipo (sin contarse a sí mismo ni a torres/bases)?
+    private bool HasLivingAllyTroops()
+    {
+        if (allyLayer.value == 0) return false;
+
+        Collider2D[] hits = Physics2D.OverlapCircleAll(_controller.transform.position, allyCheckRadius, allyLayer);
+        foreach (Collider2D hit in hits)
+        {
+            HealthSystem health = hit.GetComponentInParent<HealthSystem>();
+            if (health == null || health == ownHealth || health.IsDead) continue;
+            if (health.GetComponentInParent<TroopController>() == null) continue; // torre o base: no cuenta
+            return true;
+        }
+        return false;
+    }
+
+    // Si el TroopStats del monje no tiene valores de ataque, usa los de curación.
+    private float AttackCooldown()
+    {
+        float cd = _controller.Stats.attackCooldown;
+        return Mathf.Max(0f, cd > 0f ? cd : _controller.Stats.healingCooldown);
+    }
+
+    private float AttackDamage()
+    {
+        float dmg = _controller.Stats.attackDamage;
+        return dmg > 0f ? dmg : _controller.Stats.healingPower;
+    }
+
+    private HealthSystem FindClosest(LayerMask mask, bool needsHealing)
+    {
+        if (mask.value == 0) return null;
+
         Collider2D[] hits = Physics2D.OverlapCircleAll(
             _controller.transform.position,
             _controller.Stats.detectionRange,
-            allyLayer
+            mask
         );
 
-        float closestDistance = Mathf.Infinity;
+        HealthSystem best = null;
+        float bestDistance = Mathf.Infinity;
 
         foreach (Collider2D hit in hits)
         {
             HealthSystem health = hit.GetComponentInParent<HealthSystem>();
 
-            if (health == null || health == ownHealth)
+            if (health == null || health == ownHealth || health.IsDead)
+                continue;
+            if (needsHealing && !health.NeedsHealing)
                 continue;
 
-            if (health.IsDead || !health.NeedsHealing)
-                continue;
-
-            float distance = Vector2.Distance(
-                _controller.transform.position,
-                health.transform.position
-            );
-
-            if (distance < closestDistance)
+            float distance = Vector2.Distance(_controller.transform.position, health.transform.position);
+            if (distance < bestDistance)
             {
-                closestDistance = distance;
-                healTarget = health.transform;
-                targetHealth = health;
+                bestDistance = distance;
+                best = health;
             }
         }
+
+        return best;
     }
+
+    private void SetTarget(HealthSystem health, MonkAction type)
+    {
+        targetHealth = health;
+        target = health.transform;
+        targetType = type;
+    }
+
+    private void ClearTarget()
+    {
+        target = null;
+        targetHealth = null;
+        targetType = MonkAction.None;
+    }
+
+    private bool IsValidTarget()
+    {
+        if (target == null || targetHealth == null || targetHealth.IsDead)
+            return false;
+
+        return targetType != MonkAction.Heal || targetHealth.NeedsHealing;
+    }
+
+    // ---------- Utilidades ----------
 
     private void StopMoving()
     {
@@ -233,26 +406,27 @@ public class HealState : States<TroopController>
         _controller.SetAttacking(false);
     }
 
-    public override void OnExit()
+    // Funciona tanto si el parámetro es Bool como si es Trigger.
+    private void SetAnim(string param, bool value)
     {
-        if (animationEvents != null)
+        if (animator == null || string.IsNullOrEmpty(param)) return;
+
+        foreach (AnimatorControllerParameter p in animator.parameters)
         {
-            animationEvents.HealApplied -= HandleHealApplied;
-            animationEvents.HealFinished -= HandleHealFinished;
+            if (p.name != param) continue;
+
+            if (p.type == AnimatorControllerParameterType.Bool)
+                animator.SetBool(param, value);
+            else if (p.type == AnimatorControllerParameterType.Trigger)
+            {
+                if (value) animator.SetTrigger(param);
+                else animator.ResetTrigger(param);
+            }
+            return;
         }
 
-        StopMoving();
-
-        isHealing = false;
-        healApplied = false;
-
-        if (animator != null)
-            animator.SetBool("isHealing", false);
-
-        healTarget = null;
-        targetHealth = null;
-
-        // No reiniciamos nextHeal: el cooldown se mantiene aunque se salga y se vuelva a entrar al estado.
+        if (value)
+            Debug.LogWarning($"[{_controller.name}] El Animator no tiene el parámetro '{param}'.", _controller);
     }
 
     private void OnDrawGizmosSelected()
@@ -263,6 +437,7 @@ public class HealState : States<TroopController>
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(_controller.transform.position, _controller.Stats.detectionRange);
 
+        // Curar y atacar comparten este rango.
         Gizmos.color = Color.green;
         Gizmos.DrawWireSphere(_controller.transform.position, _controller.Stats.healingRange);
     }

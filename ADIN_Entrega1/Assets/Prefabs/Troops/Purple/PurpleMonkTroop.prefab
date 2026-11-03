@@ -143,7 +143,7 @@ SpriteRenderer:
   m_SortingOrder: 2
   m_Sprite: {fileID: 4723107735738678597, guid: fe0068d0659704ab6a796ee3d8b72476, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_FlipX: 1
+  m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
   m_Size: {x: 3, y: 3}
@@ -224,6 +224,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   attackCollider: {fileID: 0}
+  orientHitboxToAttackDirection: 0
+  hitboxReach: 0.6
 --- !u!1 &8451943837878138442
 GameObject:
   m_ObjectHideFlags: 0
@@ -329,8 +331,8 @@ MonoBehaviour:
   speed: 2
   nodeTolerance: 0.03
   flipSpriteByDirection: 1
-  mirrorWithScale: 1
-  artFacesLeft: 1
+  bodySprite: {fileID: 8855080503512467196}
+  initialFacing: 2
 --- !u!114 &2073705740334853389
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -346,8 +348,18 @@ MonoBehaviour:
   allyLayer:
     serializedVersion: 2
     m_Bits: 64
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 8
   checkInterval: 0.25
   repathInterval: 0.3
+  canAttack: 1
+  attackOnlyWhenNoAllies: 1
+  allyCheckRadius: 100
+  healAnimParam: isHealing
+  attackAnimParam: isAttacking
+  actionMaxDuration: 2
+  debugLogs: 1
 --- !u!1001 &1793413225663948358
 PrefabInstance:
   m_ObjectHideFlags: 0

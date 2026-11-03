@@ -92,7 +92,6 @@ public class TerrainGridBaker : MonoBehaviour
         native.Dispose();
 
         if (!ok) Debug.LogError("[TerrainGridBaker] No se pudo construir la rejilla.");
-        else Debug.Log($"[TerrainGridBaker] Rejilla construida: {size.x}x{size.y} celdas de {cellSize} unidades.");
     }
 
     [ContextMenu("Previsualizar rejilla (gizmos)")]

@@ -82,7 +82,7 @@ SpriteRenderer:
   m_SortingOrder: 2
   m_Sprite: {fileID: -594197781322936934, guid: d91f841009e3f4ad1a644257d8ecde00, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_FlipX: 0
+  m_FlipX: 1
   m_FlipY: 0
   m_DrawMode: 0
   m_Size: {x: 3, y: 3}
@@ -368,8 +368,8 @@ MonoBehaviour:
   speed: 2
   nodeTolerance: 0.03
   flipSpriteByDirection: 1
-  mirrorWithScale: 1
-  artFacesLeft: 0
+  bodySprite: {fileID: 4803968797624589461}
+  initialFacing: 2
 --- !u!114 &5388724382176775005
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -385,9 +385,10 @@ MonoBehaviour:
   alternateAttackAnimations: 0
   useDirectionalAttackAnimation: 1
   animationFallbackTime: 1
-  useEightDirections: 0
+  useEightDirections: 1
   mirrorLeftWithSpriteFlip: 0
   verticalBias: 1.2
+  directionHysteresis: 20
   directionXParam: DirectionX
   directionYParam: DirectionY
   debugCooldown: 1

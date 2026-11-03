@@ -8,6 +8,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 418177276219806917, guid: a1ef714beacdcd043a606f2cd6c802ab, type: 3}
+      propertyPath: artFacesLeft
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 418177276219806917, guid: a1ef714beacdcd043a606f2cd6c802ab, type: 3}
+      propertyPath: initialFacing
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 587882833733114387, guid: a1ef714beacdcd043a606f2cd6c802ab, type: 3}
       propertyPath: m_Name
       value: BlueArcherTroop Variant

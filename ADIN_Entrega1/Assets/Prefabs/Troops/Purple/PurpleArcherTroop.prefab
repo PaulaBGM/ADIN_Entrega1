@@ -127,7 +127,9 @@ MonoBehaviour:
   nodeTolerance: 0.03
   flipSpriteByDirection: 1
   mirrorWithScale: 1
-  artFacesLeft: 0
+  artFacesLeft: 1
+  bodySprite: {fileID: 679042691254095148}
+  initialFacing: 2
 --- !u!114 &8866351688308967337
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -319,7 +321,7 @@ SpriteRenderer:
   m_SortingOrder: 2
   m_Sprite: {fileID: 7257567913506708742, guid: abc79d95ca2994e20b019ba42fccbcb9, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_FlipX: 1
+  m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
   m_Size: {x: 3, y: 3}

@@ -1,44 +1,74 @@
-using System.Collections.Generic;
+Ôªøusing System.Collections.Generic;
 using JPS4;
 using UnityEngine;
 
 /// <summary>
 /// Mueve la tropa por el camino que calcula el plugin JPS4 (PathfindingGridBuilder).
 /// Sustituye al NavMeshAgent: MoveTo / Stop / IsMoving.
+/// El giro se hace solo con SpriteRenderer.flipX (el arte de todas las tropas mira a la derecha).
 /// </summary>
 public class TroopPathMover : MonoBehaviour
 {
-    [SerializeField] private PathfindingGridBuilder grid;   // Si se deja vacÌo, se busca en la escena
+    [SerializeField] private PathfindingGridBuilder grid;   // Si se deja vac√≠o, se busca en la escena
     [SerializeField] private float speed = 2f;               // Unidades de mundo por segundo
     [SerializeField] private float nodeTolerance = 0.03f;    // Distancia para dar un nodo por alcanzado
-    [SerializeField] private bool flipSpriteByDirection = true; // Asume que el sprite mira a la derecha
-    [SerializeField, Tooltip("Girar con la escala X del objeto del sprite (Visual) en vez de flipX. AsÌ el hitbox del ataque tambiÈn se gira con la tropa.")]
-    private bool mirrorWithScale = true;
-    [SerializeField, Tooltip("M·rcalo si el arte de esta tropa mira a la IZQUIERDA de serie y camina hacia atr·s (p. ej. el lancero morado).")]
-    private bool artFacesLeft = false;
+    [SerializeField] private bool flipSpriteByDirection = true;
+
+    [SerializeField, Tooltip("SpriteRenderer del cuerpo (el del Animator). Si se deja vac√≠o se busca solo.")]
+    private SpriteRenderer bodySprite;
+
+    public enum InitialFacing { AsAuthored, Right, Left }
+
+    [SerializeField, Tooltip("Hacia d√≥nde mira la tropa al aparecer. Equipo azul: Right. Equipo morado: Left.")]
+    private InitialFacing initialFacing = InitialFacing.AsAuthored;
 
     private List<Vector3> path;
     private int index;
     private SpriteRenderer sprite;
+    private float nextDiagnostic;
 
     public bool IsMoving { get; private set; }
     public float Speed { get => speed; set => speed = value; }
-    public bool MirrorsWithScale => flipSpriteByDirection && mirrorWithScale;
+
+    /// <summary>True si la tropa mira a la izquierda.</summary>
+    public bool FacingLeft => sprite != null && sprite.flipX;
+
+    // Se mantiene por compatibilidad con scripts antiguos: ya no se gira con la escala.
+    public bool MirrorsWithScale => false;
 
     private void Awake()
     {
         if (grid == null) grid = FindFirstObjectByType<PathfindingGridBuilder>();
-        sprite = GetComponentInChildren<SpriteRenderer>();
+        sprite = FindBodySprite();
 
-        // Si el prefab tiene Flip X marcado (p. ej. el equipo que mira a la izquierda),
-        // lo pasamos a la escala para no girar dos veces.
-        if (mirrorWithScale && sprite != null && sprite.flipX)
+        if (sprite == null)
+            Debug.LogWarning($"[{name}] TroopPathMover no encuentra el SpriteRenderer del cuerpo; no podr√° girar.", this);
+    }
+
+    private void Start()
+    {
+        ApplyInitialFacing();
+    }
+
+    private SpriteRenderer FindBodySprite()
+    {
+        if (bodySprite != null) return bodySprite;
+
+        Animator animator = GetComponentInChildren<Animator>();
+        if (animator != null)
         {
-            sprite.flipX = false;
-            Vector3 scale = sprite.transform.localScale;
-            scale.x = -Mathf.Abs(scale.x);
-            sprite.transform.localScale = scale;
+            SpriteRenderer onAnimator = animator.GetComponent<SpriteRenderer>();
+            if (onAnimator != null) return onAnimator;
         }
+
+        return GetComponentInChildren<SpriteRenderer>();
+    }
+
+    /// <summary>Orienta la tropa seg√∫n 'initialFacing'. √ötil tambi√©n al reiniciar la formaci√≥n.</summary>
+    public void ApplyInitialFacing()
+    {
+        if (initialFacing == InitialFacing.Right) Flip(1f);
+        else if (initialFacing == InitialFacing.Left) Flip(-1f);
     }
 
     /// <summary>Calcula un camino hasta destination y empieza a seguirlo. Devuelve false si no hay camino.</summary>
@@ -56,7 +86,7 @@ public class TroopPathMover : MonoBehaviour
 
         if (!grid.IsBuilt)
         {
-            Debug.LogWarning($"[{name}] La rejilla no est· construida. Con Collision Type = Custom necesitas un " +
+            Debug.LogWarning($"[{name}] La rejilla no est√° construida. Con Collision Type = Custom necesitas un " +
                              "TerrainGridBaker en la escena con al menos un Tilemap asignado (mira su aviso en la consola).");
             IsMoving = false;
             return false;
@@ -64,8 +94,8 @@ public class TroopPathMover : MonoBehaviour
 
         var config = new PathConfig
         {
-            CollapseSkips = true,     // Un nodo por celda, asÌ el movimiento es continuo
-            UseClosestTarget = true,  // Si el destino no es alcanzable, ir a lo m·s cercano
+            CollapseSkips = true,     // Un nodo por celda, as√≠ el movimiento es continuo
+            UseClosestTarget = true,  // Si el destino no es alcanzable, ir a lo m√°s cercano
             QueryDynamic = false
         };
 
@@ -82,8 +112,8 @@ public class TroopPathMover : MonoBehaviour
             return false;
         }
 
-        // El primer nodo es el centro de la celda actual. Si ya hemos pasado de Èl
-        // (por ejemplo al recalcular mientras andamos), lo saltamos para no dar un paso atr·s.
+        // El primer nodo es el centro de la celda actual. Si ya hemos pasado de √©l
+        // (por ejemplo al recalcular mientras andamos), lo saltamos para no dar un paso atr√°s.
         index = 0;
         if (path.Count > 1)
         {
@@ -102,9 +132,7 @@ public class TroopPathMover : MonoBehaviour
         path = null;
     }
 
-    private float nextDiagnostic;
-
-    /// <summary>Texto de diagnÛstico: celda, si est· dentro de la rejilla y si es caminable.</summary>
+    /// <summary>Texto de diagn√≥stico: celda, si est√° dentro de la rejilla y si es caminable.</summary>
     private string Describe(Vector3 world)
     {
         var tg = grid.Grid;
@@ -117,10 +145,19 @@ public class TroopPathMover : MonoBehaviour
         return $"pos ({world.x:0.0}, {world.y:0.0}) celda ({cell.x}, {cell.y}) -> {walk}";
     }
 
-    /// <summary>Girar el sprite hacia un punto (para el ataque, cuando est· parada).</summary>
+    /// <summary>Girar el sprite hacia un punto (para el ataque, cuando est√° parada).</summary>
     public void FaceTowards(Vector3 point)
     {
         Flip(point.x - transform.position.x);
+    }
+
+    /// <summary>
+    /// Deja el sprite sin voltear, tal como est√° dibujado. Para animaciones que ya traen
+    /// su propia direcci√≥n (ataques del lancero con clips de izquierda).
+    /// </summary>
+    public void ResetFacing()
+    {
+        if (sprite != null) sprite.flipX = false;
     }
 
     private void Update()
@@ -148,16 +185,6 @@ public class TroopPathMover : MonoBehaviour
     private void Flip(float dirX)
     {
         if (!flipSpriteByDirection || sprite == null || Mathf.Abs(dirX) < 0.0001f) return;
-
-        if (mirrorWithScale)
-        {
-            Transform visual = sprite.transform;
-            Vector3 scale = visual.localScale;
-            float sign = dirX < 0f ? -1f : 1f;
-            if (artFacesLeft) sign = -sign;
-            scale.x = Mathf.Abs(scale.x) * sign;   // se fija siempre, sin depender del valor previo
-            visual.localScale = scale;
-        }
-        else sprite.flipX = artFacesLeft ? dirX > 0f : dirX < 0f;
+        sprite.flipX = dirX < 0f;
     }
 }

@@ -16,6 +16,9 @@ public class AttackState : States<TroopController>, ITroopAttack
     [SerializeField] private bool mirrorLeftWithSpriteFlip = true;
     [Tooltip("Solo en modo 4 direcciones: cuánto tiene que dominar el eje vertical para elegir arriba/abajo.")]
     [SerializeField] private float verticalBias = 1.2f;
+    [Tooltip("Grados extra que tiene que girar el objetivo para cambiar de dirección respecto al ataque anterior. " +
+             "Evita que el lancero alterne entre dos direcciones cuando el enemigo está justo en la frontera (p. ej. entre derecha y arriba-derecha).")]
+    [SerializeField] private float directionHysteresis = 12f;
     [SerializeField] private string directionXParam = "DirectionX";
     [SerializeField] private string directionYParam = "DirectionY";
 
@@ -69,7 +72,9 @@ public class AttackState : States<TroopController>, ITroopAttack
             return;
         }
 
-        float distance = Vector2.Distance(_controller.transform.position, target.position);
+        // Distancia hasta el BORDE del objetivo, no hasta su centro: con objetivos grandes
+        // (torres) el centro puede estar lejos aunque la tropa ya esté pegada a la pared.
+        float distance = DistanceToTarget(_controller.transform.position, target);
 
         if (distance > _controller.Stats.attackRange)
         {
@@ -160,6 +165,12 @@ public class AttackState : States<TroopController>, ITroopAttack
 
         currentAttackDirection = useDirectionalAttackAnimation ? CalculateAttackDirection(target) : Vector2.zero;
 
+        // Si el Blend Tree tiene clips propios de izquierda, el sprite no se puede voltear:
+        // el clip ya mira a la izquierda y se vería volteado dos veces (lanza hacia la derecha).
+        // Se hace ANTES de orientar la hitbox, porque la hitbox mira la escala del Visual.
+        if (useDirectionalAttackAnimation && !mirrorLeftWithSpriteFlip && _controller.Mover != null)
+            _controller.Mover.ResetFacing();
+
         // Primero la dirección y la hitbox, después se activa el ataque,
         // para que el Blend Tree arranque ya en el clip correcto.
         ApplyDirectionToAnimator(currentAttackDirection);
@@ -208,18 +219,43 @@ public class AttackState : States<TroopController>, ITroopAttack
         if (delta.sqrMagnitude <= 0.0001f)
             return currentAttackDirection != Vector2.zero ? currentAttackDirection : Vector2.right;
 
+        float angle = Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg;
+
+        // Histéresis: si el objetivo sigue "más o menos" en la dirección del ataque anterior,
+        // se mantiene. Así no salta entre (1,0) y (1,1) por moverse un par de píxeles.
+        if (currentAttackDirection != Vector2.zero)
+        {
+            float currentAngle = Mathf.Atan2(currentAttackDirection.y, currentAttackDirection.x) * Mathf.Rad2Deg;
+            float halfSector = useEightDirections ? 22.5f : 45f;
+
+            if (Mathf.Abs(Mathf.DeltaAngle(angle, currentAngle)) <= halfSector + Mathf.Max(0f, directionHysteresis))
+            {
+                if (debugCooldown)
+                    Debug.Log($"[{_controller.name}] DEBUG: ángulo al objetivo = {angle:F1}º → se mantiene {currentAttackDirection}", _controller);
+                return currentAttackDirection;
+            }
+        }
+
+        Vector2 result;
+
         if (useEightDirections)
         {
-            float angle = Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg;
             float snapped = Mathf.Round(angle / 45f) * 45f * Mathf.Deg2Rad;
 
             // Da (1,0), (1,1), (0,1), (-1,1), (-1,0), (-1,-1), (0,-1), (1,-1)
-            return new Vector2(Mathf.Round(Mathf.Cos(snapped)), Mathf.Round(Mathf.Sin(snapped)));
+            result = new Vector2(Mathf.Round(Mathf.Cos(snapped)), Mathf.Round(Mathf.Sin(snapped)));
+        }
+        else
+        {
+            result = Mathf.Abs(delta.y) > Mathf.Abs(delta.x) * Mathf.Max(0.01f, verticalBias)
+                ? new Vector2(0f, Mathf.Sign(delta.y))
+                : new Vector2(Mathf.Sign(delta.x), 0f);
         }
 
-        return Mathf.Abs(delta.y) > Mathf.Abs(delta.x) * Mathf.Max(0.01f, verticalBias)
-            ? new Vector2(0f, Mathf.Sign(delta.y))
-            : new Vector2(Mathf.Sign(delta.x), 0f);
+        if (debugCooldown)
+            Debug.Log($"[{_controller.name}] DEBUG: ángulo al objetivo = {angle:F1}º → nueva dirección {result}", _controller);
+
+        return result;
     }
 
     // Lo que recibe el Animator: si la izquierda se consigue volteando el sprite, X siempre es positivo.
@@ -237,6 +273,32 @@ public class AttackState : States<TroopController>, ITroopAttack
         Vector2 animDir = AnimatorDirection(direction);
         animator.SetFloat(directionXParam, animDir.x);
         animator.SetFloat(directionYParam, animDir.y);
+    }
+
+    /// <summary>
+    /// Distancia desde 'from' hasta el punto más cercano del cuerpo del objetivo (su collider sólido).
+    /// Si no tiene collider sólido, hasta su posición.
+    /// </summary>
+    public static float DistanceToTarget(Vector2 from, Transform target)
+    {
+        if (target == null) return Mathf.Infinity;
+
+        Collider2D body = GetBodyCollider(target);
+        if (body != null)
+            return Vector2.Distance(from, body.ClosestPoint(from));
+
+        return Vector2.Distance(from, target.position);
+    }
+
+    private static Collider2D GetBodyCollider(Transform t)
+    {
+        Collider2D[] colliders = t.GetComponentsInChildren<Collider2D>();
+        foreach (Collider2D c in colliders)
+        {
+            if (c.enabled && !c.isTrigger)
+                return c;
+        }
+        return null;
     }
 
     private static Vector2 GetBodyCenter(Transform t)

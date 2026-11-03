@@ -17,8 +17,16 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 9100000, guid: 010817759ac3943d8a63d1698ab7d60e, type: 2}
     - target: {fileID: 2073705740334853389, guid: cdd7c9fd4fd27f54e835f9c734c20c82, type: 3}
+      propertyPath: attackAnimParam
+      value: isAttacking
+      objectReference: {fileID: 0}
+    - target: {fileID: 2073705740334853389, guid: cdd7c9fd4fd27f54e835f9c734c20c82, type: 3}
       propertyPath: allyLayer.m_Bits
       value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 2073705740334853389, guid: cdd7c9fd4fd27f54e835f9c734c20c82, type: 3}
+      propertyPath: enemyLayer.m_Bits
+      value: 64
       objectReference: {fileID: 0}
     - target: {fileID: 2484644882358891062, guid: cdd7c9fd4fd27f54e835f9c734c20c82, type: 3}
       propertyPath: m_Color.b
@@ -71,6 +79,14 @@ PrefabInstance:
     - target: {fileID: 3455747832585698828, guid: cdd7c9fd4fd27f54e835f9c734c20c82, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4835538662182057121, guid: cdd7c9fd4fd27f54e835f9c734c20c82, type: 3}
+      propertyPath: artFacesLeft
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4835538662182057121, guid: cdd7c9fd4fd27f54e835f9c734c20c82, type: 3}
+      propertyPath: initialFacing
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5262868073048901647, guid: cdd7c9fd4fd27f54e835f9c734c20c82, type: 3}
       propertyPath: enemyLayer.m_Bits

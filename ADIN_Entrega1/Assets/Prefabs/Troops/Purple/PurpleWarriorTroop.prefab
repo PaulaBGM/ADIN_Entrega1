@@ -187,7 +187,9 @@ MonoBehaviour:
   nodeTolerance: 0.03
   flipSpriteByDirection: 1
   mirrorWithScale: 1
-  artFacesLeft: 0
+  artFacesLeft: 1
+  bodySprite: {fileID: 9184393139193457384}
+  initialFacing: 2
 --- !u!114 &1393236763314521183
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -203,6 +205,12 @@ MonoBehaviour:
   alternateAttackAnimations: 1
   useDirectionalAttackAnimation: 0
   animationFallbackTime: 1
+  useEightDirections: 1
+  mirrorLeftWithSpriteFlip: 0
+  verticalBias: 1.2
+  directionHysteresis: 12
+  directionXParam: DirectionX
+  directionYParam: DirectionY
   debugCooldown: 1
   debugInterval: 0.25
 --- !u!1 &5634924489831744605
@@ -398,7 +406,7 @@ SpriteRenderer:
   m_SortingOrder: 2
   m_Sprite: {fileID: 7384290322352760091, guid: 0505cf46dcd784e559fa26016d355ac0, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_FlipX: 1
+  m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
   m_Size: {x: 3, y: 3}
@@ -479,6 +487,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   attackCollider: {fileID: 7482247458525735972}
+  orientHitboxToAttackDirection: 0
+  hitboxReach: 0.6
 --- !u!50 &629218791575096789
 Rigidbody2D:
   serializedVersion: 5
