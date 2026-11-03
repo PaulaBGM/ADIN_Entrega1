@@ -125,7 +125,8 @@ public class HealState : States<TroopController>
 
         // Curar y atacar usan el mismo rango (healingRange) y la misma detección (detectionRange).
         float range = _controller.Stats.healingRange;
-        float distance = Vector2.Distance(_controller.transform.position, target.position);
+        // Hasta el borde del objetivo: así el monje también puede golpear una torre.
+        float distance = AttackState.DistanceToTarget(_controller.transform.position, target);
 
         if (distance > range)
         {

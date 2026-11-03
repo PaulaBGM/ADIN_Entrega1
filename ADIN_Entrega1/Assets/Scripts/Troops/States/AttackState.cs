@@ -40,8 +40,17 @@ public class AttackState : States<TroopController>, ITroopAttack
 
     public bool IsAttackInProgress => waitingForHit;
 
+    /// <summary>True mientras este estado es el activo de la FSM.</summary>
+    public bool IsActive { get; private set; }
+
+    [Header("Estructuras (torres)")]
+    [SerializeField] private float structureRepathInterval = 0.4f;
+    private float nextStructureRepath;
+
     public override void OnEnter()
     {
+        IsActive = true;
+        nextStructureRepath = 0f;
         _controller.HurtStarted -= HandleHurtStarted;
         _controller.HurtStarted += HandleHurtStarted;
         _controller.HurtFinished -= HandleHurtFinished;
@@ -75,6 +84,21 @@ public class AttackState : States<TroopController>, ITroopAttack
         // Distancia hasta el BORDE del objetivo, no hasta su centro: con objetivos grandes
         // (torres) el centro puede estar lejos aunque la tropa ya esté pegada a la pared.
         float distance = DistanceToTarget(_controller.transform.position, target);
+
+        if (distance > _controller.Stats.attackRange && IsStructure(target) && !waitingForHit)
+        {
+            // Torre: WalkState no sabe acercarse a ella, así que el propio estado
+            // camina hasta el punto más cercano de su collider.
+            if (Time.time >= nextStructureRepath && _controller.Mover != null)
+            {
+                nextStructureRepath = Time.time + structureRepathInterval;
+                Collider2D body = GetBodyCollider(target);
+                Vector2 point = body != null ? body.ClosestPoint(_controller.transform.position) : (Vector2)target.position;
+                _controller.Mover.MoveTo(point);
+                _controller.SetMovementSpeed(_controller.Stats.movementSpeed);
+            }
+            return;
+        }
 
         if (distance > _controller.Stats.attackRange)
         {
@@ -290,6 +314,12 @@ public class AttackState : States<TroopController>, ITroopAttack
         return Vector2.Distance(from, target.position);
     }
 
+    /// <summary>Una estructura es un objetivo con vida pero sin TroopController (torres, bases...).</summary>
+    public static bool IsStructure(Transform t)
+    {
+        return t != null && t.GetComponentInParent<TroopController>() == null;
+    }
+
     private static Collider2D GetBodyCollider(Transform t)
     {
         Collider2D[] colliders = t.GetComponentsInChildren<Collider2D>();
@@ -367,6 +397,7 @@ public class AttackState : States<TroopController>, ITroopAttack
 
     public override void OnExit()
     {
+        IsActive = false;
         _controller.HurtStarted -= HandleHurtStarted;
         _controller.HurtFinished -= HandleHurtFinished;
         _controller.AttackAnimationFinished -= FinishAttackAnimation;
