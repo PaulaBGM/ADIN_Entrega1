@@ -479,8 +479,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   attackCollider: {fileID: 7482247458525735972}
-  hitPoint: {fileID: 8307540014180978535}
-  hitPointOffset: {x: 0, y: 0, z: 0}
 --- !u!50 &629218791575096789
 Rigidbody2D:
   serializedVersion: 5

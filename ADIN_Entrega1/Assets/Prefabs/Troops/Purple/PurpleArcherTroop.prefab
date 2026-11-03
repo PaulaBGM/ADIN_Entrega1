@@ -175,7 +175,6 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 8
   checkInterval: 0.25
-  movementSpritePrefab: {fileID: 1722837773884077143, guid: 4f8af583ff847a44bba44873cbb340a7, type: 3}
   spriteInterval: 0.4
   spriteSpawnPoint: {fileID: 7355094088016038353}
 --- !u!1 &1183518355127544053

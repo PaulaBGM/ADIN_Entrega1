@@ -330,7 +330,7 @@ MonoBehaviour:
   nodeTolerance: 0.03
   flipSpriteByDirection: 1
   mirrorWithScale: 1
-  artFacesLeft: 0
+  artFacesLeft: 1
 --- !u!114 &2073705740334853389
 MonoBehaviour:
   m_ObjectHideFlags: 0

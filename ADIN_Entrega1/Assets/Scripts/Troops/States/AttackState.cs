@@ -8,6 +8,17 @@ public class AttackState : States<TroopController>, ITroopAttack
     [SerializeField] private bool useDirectionalAttackAnimation = false;
     [SerializeField] private float animationFallbackTime = 1f;
 
+    [Header("Dirección del ataque (Lancero)")]
+    [Tooltip("8 direcciones (incluye diagonales). Si está desactivado, usa 4 direcciones.")]
+    [SerializeField] private bool useEightDirections = true;
+    [Tooltip("Actívalo si el Blend Tree solo tiene clips mirando a la DERECHA y el lado izquierdo se consigue volteando el sprite (FaceTowards). " +
+             "Desactívalo si el Blend Tree tiene clips propios para la izquierda (DirectionX negativo).")]
+    [SerializeField] private bool mirrorLeftWithSpriteFlip = true;
+    [Tooltip("Solo en modo 4 direcciones: cuánto tiene que dominar el eje vertical para elegir arriba/abajo.")]
+    [SerializeField] private float verticalBias = 1.2f;
+    [SerializeField] private string directionXParam = "DirectionX";
+    [SerializeField] private string directionYParam = "DirectionY";
+
     [Header("Debug del cooldown")]
     [SerializeField] private bool debugCooldown = true;
     [SerializeField] private float debugInterval = 0.25f;
@@ -20,6 +31,10 @@ public class AttackState : States<TroopController>, ITroopAttack
     private bool waitingForHit;
     private bool damageAppliedThisAttack;
 
+    private Animator animator;
+    private TroopAnimationEvents animationEvents;
+    private Vector2 currentAttackDirection;
+
     public bool IsAttackInProgress => waitingForHit;
 
     public override void OnEnter()
@@ -31,10 +46,14 @@ public class AttackState : States<TroopController>, ITroopAttack
         _controller.AttackAnimationFinished -= FinishAttackAnimation;
         _controller.AttackAnimationFinished += FinishAttackAnimation;
 
+        animator = _controller.GetComponentInChildren<Animator>();
+        animationEvents = _controller.GetComponentInChildren<TroopAnimationEvents>();
+
         waitingForHit = false;
         damageAppliedThisAttack = false;
         useSecondAttack = false;
         targetHealth = null;
+        currentAttackDirection = Vector2.zero;
         StopMovement();
         _controller.SetMovementSpeed(0f);
         SetAttackAnimation(false, Vector2.zero);
@@ -54,6 +73,8 @@ public class AttackState : States<TroopController>, ITroopAttack
 
         if (distance > _controller.Stats.attackRange)
         {
+            // Si se sale a mitad de un ataque, el cooldown también cuenta.
+            if (waitingForHit) StartCooldown();
             waitingForHit = false;
             damageAppliedThisAttack = false;
             SetAttackAnimation(false, Vector2.zero);
@@ -63,7 +84,6 @@ public class AttackState : States<TroopController>, ITroopAttack
 
         StopMovement();
         _controller.SetMovementSpeed(0f);
-        if (_controller.Mover != null) _controller.Mover.FaceTowards(target.position);
 
         if (waitingForHit && Time.time >= attackFinishTime)
         {
@@ -71,7 +91,16 @@ public class AttackState : States<TroopController>, ITroopAttack
             FinishAttackAnimation();
         }
 
-        if (waitingForHit) return;
+        if (waitingForHit)
+        {
+            // Durante el golpe se mantiene la dirección fijada al empezar, por si otro script
+            // (movimiento, idle...) sobrescribe DirectionX/DirectionY en el Animator.
+            ApplyDirectionToAnimator(currentAttackDirection);
+            return;
+        }
+
+        // Solo se gira hacia el objetivo cuando NO está atacando, para no voltear el sprite a mitad del golpe.
+        if (_controller.Mover != null) _controller.Mover.FaceTowards(target.position);
 
         if (Time.time < nextAttackTime)
         {
@@ -129,10 +158,18 @@ public class AttackState : States<TroopController>, ITroopAttack
 
         if (alternateAttackAnimations) useSecondAttack = !useSecondAttack;
 
-        Vector2 direction = useDirectionalAttackAnimation ? CalculateAttackDirection(target) : Vector2.zero;
-        SetAttackAnimation(true, direction);
+        currentAttackDirection = useDirectionalAttackAnimation ? CalculateAttackDirection(target) : Vector2.zero;
 
-        if (debugCooldown) Debug.Log($"[{_controller.name}] DEBUG: empieza ataque a las {Time.time:F2}; cooldown configurado = {_controller.Stats.attackCooldown:F2} s", _controller);
+        // Primero la dirección y la hitbox, después se activa el ataque,
+        // para que el Blend Tree arranque ya en el clip correcto.
+        ApplyDirectionToAnimator(currentAttackDirection);
+        if (animationEvents != null && useDirectionalAttackAnimation)
+            animationEvents.SetAttackDirection(currentAttackDirection);
+
+        SetAttackAnimation(true, AnimatorDirection(currentAttackDirection));
+
+        if (debugCooldown)
+            Debug.Log($"[{_controller.name}] DEBUG: empieza ataque a las {Time.time:F2}; dirección = {currentAttackDirection}; cooldown configurado = {_controller.Stats.attackCooldown:F2} s", _controller);
     }
 
     public void InterruptAttackForHurt()
@@ -158,18 +195,63 @@ public class AttackState : States<TroopController>, ITroopAttack
         _controller.SetMeleeAttackAnimation(attacking, attacking && alternateAttackAnimations && useSecondAttack, direction);
     }
 
+    // ---------- Dirección ----------
+
     private Vector2 CalculateAttackDirection(Transform target)
     {
-        Vector2 direction = (Vector2)(target.position - _controller.transform.position);
-        if (direction.sqrMagnitude <= 0.001f) return Vector2.down;
+        // Se usa el centro del cuerpo (collider) y no el pivote de los pies:
+        // con pivotes en los pies, una diferencia de altura entre sprites falsea el eje Y.
+        Vector2 from = GetBodyCenter(_controller.transform);
+        Vector2 to = GetBodyCenter(target);
+        Vector2 delta = to - from;
 
-        direction.Normalize();
-        // Los pivotes están en los pies, así que a corta distancia dy puede ser grande aunque el
-        // enemigo esté a un lado. Se prefiere el eje horizontal salvo que el vertical domine claramente.
-        return Mathf.Abs(direction.y) > Mathf.Abs(direction.x) * 1.5f
-            ? new Vector2(0f, Mathf.Sign(direction.y))
-            : new Vector2(Mathf.Sign(direction.x), 0f);
+        if (delta.sqrMagnitude <= 0.0001f)
+            return currentAttackDirection != Vector2.zero ? currentAttackDirection : Vector2.right;
+
+        if (useEightDirections)
+        {
+            float angle = Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg;
+            float snapped = Mathf.Round(angle / 45f) * 45f * Mathf.Deg2Rad;
+
+            // Da (1,0), (1,1), (0,1), (-1,1), (-1,0), (-1,-1), (0,-1), (1,-1)
+            return new Vector2(Mathf.Round(Mathf.Cos(snapped)), Mathf.Round(Mathf.Sin(snapped)));
+        }
+
+        return Mathf.Abs(delta.y) > Mathf.Abs(delta.x) * Mathf.Max(0.01f, verticalBias)
+            ? new Vector2(0f, Mathf.Sign(delta.y))
+            : new Vector2(Mathf.Sign(delta.x), 0f);
     }
+
+    // Lo que recibe el Animator: si la izquierda se consigue volteando el sprite, X siempre es positivo.
+    private Vector2 AnimatorDirection(Vector2 direction)
+    {
+        if (mirrorLeftWithSpriteFlip)
+            direction.x = Mathf.Abs(direction.x);
+        return direction;
+    }
+
+    private void ApplyDirectionToAnimator(Vector2 direction)
+    {
+        if (animator == null || !useDirectionalAttackAnimation || direction == Vector2.zero) return;
+
+        Vector2 animDir = AnimatorDirection(direction);
+        animator.SetFloat(directionXParam, animDir.x);
+        animator.SetFloat(directionYParam, animDir.y);
+    }
+
+    private static Vector2 GetBodyCenter(Transform t)
+    {
+        // Primer collider sólido (no trigger) de la tropa; los triggers suelen ser armas o rangos.
+        Collider2D[] colliders = t.GetComponentsInChildren<Collider2D>();
+        foreach (Collider2D c in colliders)
+        {
+            if (c.enabled && !c.isTrigger)
+                return c.bounds.center;
+        }
+        return t.position;
+    }
+
+    // ---------- Daño ----------
 
     public void ApplyAttackDamage() { }
 
@@ -189,13 +271,22 @@ public class AttackState : States<TroopController>, ITroopAttack
         if (!waitingForHit || _controller.IsHurt) return;
 
         waitingForHit = false;
-        SetAttackAnimation(false, Vector2.zero);
+        SetAttackAnimation(false, AnimatorDirection(currentAttackDirection));
+        // Se mantiene la última dirección: con (0,0) el Blend Tree no tiene clip definido
+        // y durante la transición de salida puede aparecer un frame de otra dirección.
+        ApplyDirectionToAnimator(currentAttackDirection);
 
+        float cooldown = StartCooldown();
+
+        if (debugCooldown) Debug.Log($"[{_controller.name}] DEBUG: ataque terminado; cooldown = {cooldown:F2} s.", _controller);
+    }
+
+    private float StartCooldown()
+    {
         float cooldown = Mathf.Max(0f, _controller.Stats != null ? _controller.Stats.attackCooldown : 0f);
         nextAttackTime = Time.time + cooldown;
         nextCooldownDebugTime = Time.time;
-
-        if (debugCooldown) Debug.Log($"[{_controller.name}] DEBUG: ataque terminado; cooldown = {cooldown:F2} s.", _controller);
+        return cooldown;
     }
 
     private void ExitAttackState()
@@ -217,6 +308,9 @@ public class AttackState : States<TroopController>, ITroopAttack
         _controller.HurtStarted -= HandleHurtStarted;
         _controller.HurtFinished -= HandleHurtFinished;
         _controller.AttackAnimationFinished -= FinishAttackAnimation;
+
+        // Si la FSM cambia de estado a mitad de un ataque, el cooldown también cuenta.
+        if (waitingForHit) StartCooldown();
 
         waitingForHit = false;
         damageAppliedThisAttack = false;

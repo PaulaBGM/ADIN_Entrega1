@@ -9,6 +9,14 @@ public class TroopAnimationEvents : MonoBehaviour
     [Header("Collider del arma")]
     [SerializeField] private BoxCollider2D attackCollider;
 
+    [Header("Hitbox direccional (Lancero)")]
+    [Tooltip("Si está activo, el collider del arma se coloca en la dirección del ataque.")]
+    [SerializeField] private bool orientHitboxToAttackDirection = false;
+    [Tooltip("Distancia desde el centro del GameObject del collider hasta el centro de la hitbox.")]
+    [SerializeField] private float hitboxReach = 0.6f;
+
+    private Vector2 baseHitboxSize;
+
     private bool hitDetectedThisSwing;
     private ContactFilter2D filter;
     private readonly Collider2D[] results = new Collider2D[16];
@@ -28,9 +36,15 @@ public class TroopAnimationEvents : MonoBehaviour
             attackCollider = GetComponentInChildren<BoxCollider2D>(true);
 
         if (attackCollider != null)
+        {
             attackCollider.enabled = false;
+            // Se asume que el tamaño original es el del golpe HORIZONTAL (más ancho que alto).
+            baseHitboxSize = attackCollider.size;
+        }
         else
+        {
             Debug.LogWarning($"[{name}] No se ha encontrado el collider del arma.", this);
+        }
 
         if (troopController == null)
             Debug.LogError($"[{name}] No se ha encontrado TroopController en los padres.", this);
@@ -38,6 +52,26 @@ public class TroopAnimationEvents : MonoBehaviour
         filter = new ContactFilter2D();
         filter.NoFilter();
         filter.useTriggers = true;
+    }
+
+    // Llamado por AttackState al empezar cada ataque.
+    public void SetAttackDirection(Vector2 direction)
+    {
+        if (!orientHitboxToAttackDirection || attackCollider == null || direction == Vector2.zero)
+            return;
+
+        Vector2 n = direction.normalized;
+
+        // Si la tropa se voltea con scale.x negativo, el eje X local está invertido: se compensa.
+        // Si se voltea con SpriteRenderer.flipX, lossyScale.x es positivo y no cambia nada.
+        float flipSign = Mathf.Sign(attackCollider.transform.lossyScale.x);
+
+        attackCollider.offset = new Vector2(n.x * flipSign, n.y) * hitboxReach;
+
+        bool vertical = Mathf.Abs(n.y) > Mathf.Abs(n.x);
+        attackCollider.size = vertical
+            ? new Vector2(baseHitboxSize.y, baseHitboxSize.x)
+            : baseHitboxSize;
     }
 
     // Animation Event: comienza la ventana de impacto.
@@ -147,5 +181,12 @@ public class TroopAnimationEvents : MonoBehaviour
     private void OnDisable()
     {
         DisableAttackHitbox();
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        if (attackCollider == null) return;
+        Gizmos.color = attackCollider.enabled ? Color.red : new Color(1f, 0.5f, 0f, 0.6f);
+        Gizmos.DrawWireCube(attackCollider.bounds.center, attackCollider.bounds.size);
     }
 }
