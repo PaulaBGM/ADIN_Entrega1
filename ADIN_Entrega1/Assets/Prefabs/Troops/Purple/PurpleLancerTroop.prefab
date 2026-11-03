@@ -82,7 +82,7 @@ SpriteRenderer:
   m_SortingOrder: 2
   m_Sprite: {fileID: -594197781322936934, guid: d91f841009e3f4ad1a644257d8ecde00, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_FlipX: 1
+  m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
   m_Size: {x: 3, y: 3}
@@ -279,9 +279,9 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 4411249377429990282}
   - {fileID: 7265352798290151630}
   - {fileID: 669758395329830049}
-  - {fileID: 4411249377429990282}
   - {fileID: 1232708244313294352}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
