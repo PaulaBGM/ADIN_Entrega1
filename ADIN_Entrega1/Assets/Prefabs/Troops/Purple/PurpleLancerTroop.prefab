@@ -241,7 +241,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.5, y: 0.05}
+  m_Size: {x: 0.5, y: 1}
   m_EdgeRadius: 0
 --- !u!1 &3541513215254811848
 GameObject:
@@ -350,6 +350,10 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 8
   checkInterval: 0.25
+  towerLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  debugTower: 1
   spriteInterval: 0.4
   spriteSpawnPoint: {fileID: 669758395329830049}
 --- !u!114 &4956658979668775876
@@ -393,6 +397,7 @@ MonoBehaviour:
   directionYParam: DirectionY
   debugCooldown: 1
   debugInterval: 0.25
+  structureRepathInterval: 0.4
 --- !u!50 &3953068228211858602
 Rigidbody2D:
   serializedVersion: 5

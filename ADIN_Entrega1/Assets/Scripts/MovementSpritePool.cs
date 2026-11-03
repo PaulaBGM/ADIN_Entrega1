@@ -1,3 +1,4 @@
+
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,15 +7,26 @@ public class MovementSpritePool : MonoBehaviour
 {
     public static MovementSpritePool Instance { get; private set; }
 
-    [Header("Configuración")]
+    [System.Serializable]
+    public class PoolEntry
+    {
+        public GameObject prefab;
+        [Min(1)] public int initialSize = 10;
+        [Min(0.1f)] public float lifetime = 1f;
+    }
+
+    [Header("Prefabs y configuración")]
     [SerializeField] private GameObject spritePrefab;
     [SerializeField, Min(1)] private int initialPoolSize = 20;
     [SerializeField] private bool canExpand = true;
-
-    [Header("Duración")]
     [SerializeField, Min(0.1f)] private float spriteLifetime = 1f;
 
-    private readonly Queue<GameObject> availableSprites = new Queue<GameObject>();
+    [Header("VFX adicionales")]
+    [SerializeField] private List<PoolEntry> additionalPools = new();
+
+    private readonly Dictionary<GameObject, Queue<GameObject>> pools = new();
+    private readonly Dictionary<GameObject, GameObject> prefabByInstance = new();
+    private readonly Dictionary<GameObject, float> lifetimeByPrefab = new();
 
     private void Awake()
     {
@@ -27,54 +39,89 @@ public class MovementSpritePool : MonoBehaviour
 
         Instance = this;
 
-        for (int i = 0; i < initialPoolSize; i++)
+        RegisterPool(spritePrefab, initialPoolSize, spriteLifetime);
+
+        foreach (PoolEntry entry in additionalPools)
         {
-            CreateSprite();
+            if (entry == null || entry.prefab == null)
+                continue;
+
+            RegisterPool(entry.prefab, entry.initialSize, entry.lifetime);
         }
     }
 
-    private GameObject CreateSprite()
+    private void RegisterPool(GameObject prefab, int size, float lifetime)
     {
-        GameObject sprite = Instantiate(spritePrefab, transform);
-        sprite.SetActive(false);
-        availableSprites.Enqueue(sprite);
-        return sprite;
+        if (prefab == null || pools.ContainsKey(prefab))
+            return;
+
+        pools[prefab] = new Queue<GameObject>();
+        lifetimeByPrefab[prefab] = lifetime;
+
+        for (int i = 0; i < size; i++)
+            CreateInstance(prefab);
     }
 
+    private GameObject CreateInstance(GameObject prefab)
+    {
+        GameObject instance = Instantiate(prefab, transform);
+        instance.SetActive(false);
+
+        prefabByInstance[instance] = prefab;
+        pools[prefab].Enqueue(instance);
+
+        return instance;
+    }
+
+    // Mantiene la compatibilidad con los VFX de los pasos.
     public void Spawn(Vector3 position)
     {
-        if (spritePrefab == null) return;
+        Spawn(spritePrefab, position, Quaternion.identity);
+    }
 
-        GameObject sprite;
+    // Permite solicitar cualquier prefab registrado.
+    public void Spawn(GameObject prefab, Vector3 position, Quaternion rotation)
+    {
+        if (prefab == null || !pools.ContainsKey(prefab))
+            return;
 
-        if (availableSprites.Count > 0)
+        Queue<GameObject> pool = pools[prefab];
+
+        GameObject instance;
+
+        if (pool.Count > 0)
         {
-            sprite = availableSprites.Dequeue();
+            instance = pool.Dequeue();
         }
         else if (canExpand)
         {
-            sprite = Instantiate(spritePrefab, transform);
+            instance = CreateInstance(prefab);
+            pool.Dequeue();
         }
         else
         {
             return;
         }
 
-        sprite.transform.position = position;
-        sprite.transform.rotation = Quaternion.identity;
-        sprite.SetActive(true);
+        instance.transform.SetPositionAndRotation(position, rotation);
+        instance.SetActive(true);
 
-        StartCoroutine(ReturnToPool(sprite));
+        StartCoroutine(ReturnToPool(instance, lifetimeByPrefab[prefab]));
     }
 
-    private IEnumerator ReturnToPool(GameObject sprite)
+    private IEnumerator ReturnToPool(GameObject instance, float lifetime)
     {
-        yield return new WaitForSeconds(spriteLifetime);
+        yield return new WaitForSeconds(lifetime);
 
-        if (sprite == null) yield break;
+        if (instance == null)
+            yield break;
 
-        sprite.SetActive(false);
-        availableSprites.Enqueue(sprite);
+        instance.SetActive(false);
+
+        if (prefabByInstance.TryGetValue(instance, out GameObject prefab) && pools.TryGetValue(prefab, out Queue<GameObject> pool))
+        {
+            pool.Enqueue(instance);
+        }
     }
 
     private void OnDestroy()

@@ -2,26 +2,22 @@ using UnityEngine;
 
 public class ParticleAutoPlay : MonoBehaviour
 {
+    private ParticleSystem[] systems;
+
     private void Awake()
     {
-        ParticleSystem[] systems = GetComponentsInChildren<ParticleSystem>(true);
+        systems = GetComponentsInChildren<ParticleSystem>(true);
+    }
 
-        float maxDuration = 0f;
+    private void OnEnable()
+    {
+        if (systems == null)
+            systems = GetComponentsInChildren<ParticleSystem>(true);
 
         foreach (ParticleSystem ps in systems)
         {
+            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             ps.Play(true);
-
-            ParticleSystem.MainModule main = ps.main;
-            float duration = main.duration + main.startLifetime.constantMax;
-
-            if (duration > maxDuration)
-                maxDuration = duration;
         }
-
-        if (systems.Length == 0)
-            maxDuration = 3f;
-
-        Destroy(gameObject, maxDuration);
     }
 }

@@ -1,4 +1,3 @@
-
 using System;
 using System.Collections;
 using UnityEngine;
@@ -92,15 +91,20 @@ public class HealthSystem : MonoBehaviour
         Debug.Log($"[HEAL] {name} ha recuperado {healedAmount} de vida.");
     }
 
+    
     private void SpawnParticles(GameObject prefab)
     {
         if (prefab == null)
             return;
 
+        if (MovementSpritePool.Instance == null)
+            return;
+
         Vector3 spawnPosition = particleSpawnPoint != null ? particleSpawnPoint.position : transform.position;
 
-        Instantiate(prefab, spawnPosition, Quaternion.identity);
+        MovementSpritePool.Instance.Spawn(prefab, spawnPosition, Quaternion.identity);
     }
+
 
     private void PlayKnockback()
     {

@@ -20,7 +20,7 @@ public class ShootAttackState : States<TroopController>, ITroopAttack
         _controller.SetMovementSpeed(0f);
         _controller.SetAttacking(false);
     }
-    
+
     public override void OnUpdate()
     {
         if (_controller.Stats == null)
@@ -56,21 +56,24 @@ public class ShootAttackState : States<TroopController>, ITroopAttack
 
         if (Time.time >= nextAttackTime)
         {
-            Debug.Log(
-                $"Disparo permitido. Distancia: {distance}, " +
-                $"Rango: {_controller.Stats.attackRange}"
-            );
-            
+            Debug.Log($"Disparo permitido. Distancia: {distance}, Rango: {_controller.Stats.attackRange}");
+
             OnAttack(target);
             nextAttackTime = Time.time + _controller.Stats.attackCooldown;
         }
     }
-    
+
     public void OnAttack(Transform target)
     {
         if (target == null || arrowPrefab == null || firePoint == null)
         {
             Debug.LogWarning($"[{_controller.name}] Falta el objetivo, Arrow Prefab o Fire Point.");
+            return;
+        }
+
+        if (ArrowPool.Instance == null)
+        {
+            Debug.LogWarning("[FLECHA] No existe ArrowPool en la escena.");
             return;
         }
 
@@ -84,21 +87,10 @@ public class ShootAttackState : States<TroopController>, ITroopAttack
 
         // Crear la flecha orientada hacia el objetivo.
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-        GameObject arrow = Instantiate(arrowPrefab, origin, Quaternion.Euler(0f, 0f, angle));
 
-        // Darle dirección, velocidad y daño.
-        ArrowProjectile projectile = arrow.GetComponent<ArrowProjectile>();
-
-        if (projectile == null)
-        {
-            Debug.LogError("El prefab de la flecha no tiene ArrowProjectile.");
-            Destroy(arrow);
-            return;
-        }
-
-        projectile.Initialize(direction, arrowSpeed, _controller.Stats.attackDamage, _controller.gameObject);
+        // Darle dirección, velocidad y daño mediante el pool.
+        ArrowPool.Instance.Spawn(origin, direction, arrowSpeed, _controller.Stats.attackDamage, _controller.gameObject);
     }
-
 
     private void ReturnToIdle()
     {
@@ -116,3 +108,4 @@ public class ShootAttackState : States<TroopController>, ITroopAttack
         _controller.SetAttacking(false);
     }
 }
+
