@@ -1,4 +1,3 @@
-
 using FSM.Enemy;
 using UnityEngine;
 
@@ -15,7 +14,8 @@ public class ShootAttackState : States<TroopController>, ITroopAttack
     {
         nextAttackTime = 0f;
 
-        if (_controller.Mover != null) _controller.Mover.Stop();
+        if (_controller.Mover != null)
+            _controller.Mover.Stop();
 
         _controller.SetMovementSpeed(0f);
         _controller.SetAttacking(false);
@@ -44,14 +44,12 @@ public class ShootAttackState : States<TroopController>, ITroopAttack
 
         float distance = Vector2.Distance(_controller.transform.position, target.position);
 
-        // Esperar hasta que el enemigo entre en el rango de ataque.
         if (distance > _controller.Stats.attackRange)
         {
             _controller.SetAttacking(false);
             return;
         }
 
-        // El enemigo ya está dentro del rango.
         _controller.SetAttacking(true);
 
         if (Time.time >= nextAttackTime)
@@ -77,7 +75,6 @@ public class ShootAttackState : States<TroopController>, ITroopAttack
             return;
         }
 
-        // Calcular la dirección desde el punto de disparo hasta el objetivo.
         Vector2 origin = firePoint.position;
         Vector2 destination = target.position;
         Vector2 direction = (destination - origin).normalized;
@@ -85,11 +82,7 @@ public class ShootAttackState : States<TroopController>, ITroopAttack
         if (direction.sqrMagnitude == 0f)
             return;
 
-        // Crear la flecha orientada hacia el objetivo.
-        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-
-        // Darle dirección, velocidad y daño mediante el pool.
-        ArrowPool.Instance.Spawn(origin, direction, arrowSpeed, _controller.Stats.attackDamage, _controller.gameObject);
+        ArrowPool.Instance.Spawn(origin, direction, arrowSpeed, _controller.Stats.attackDamage, _controller.gameObject, target);
     }
 
     private void ReturnToIdle()
@@ -108,4 +101,3 @@ public class ShootAttackState : States<TroopController>, ITroopAttack
         _controller.SetAttacking(false);
     }
 }
-

@@ -39,7 +39,6 @@ public class ArrowPool : MonoBehaviour
     private ArrowProjectile CreateArrow()
     {
         GameObject instance = Instantiate(arrowPrefab, transform);
-
         ArrowProjectile arrow = instance.GetComponent<ArrowProjectile>();
 
         if (arrow == null)
@@ -53,7 +52,7 @@ public class ArrowPool : MonoBehaviour
         return arrow;
     }
 
-    public void Spawn(Vector2 position, Vector2 direction, float speed, float damage, GameObject owner)
+    public void Spawn(Vector2 position, Vector2 direction, float speed, float damage, GameObject owner, Transform target)
     {
         ArrowProjectile arrow;
 
@@ -70,13 +69,14 @@ public class ArrowPool : MonoBehaviour
         }
         else
         {
+            Debug.LogWarning("[ArrowPool] No hay flechas disponibles en el pool.");
             return;
         }
 
         arrow.transform.position = position;
+        arrow.transform.SetParent(null);
         arrow.gameObject.SetActive(true);
-
-        arrow.Initialize(direction, speed, damage, owner);
+        arrow.Initialize(direction, speed, damage, owner, target);
     }
 
     public void ReturnArrow(ArrowProjectile arrow)
@@ -85,7 +85,6 @@ public class ArrowPool : MonoBehaviour
             return;
 
         arrow.ResetProjectile();
-
         arrow.gameObject.SetActive(false);
         arrow.transform.SetParent(transform);
 
