@@ -45,12 +45,20 @@ public class AttackState : States<TroopController>, ITroopAttack
 
     [Header("Estructuras (torres)")]
     [SerializeField] private float structureRepathInterval = 0.4f;
+    [Tooltip("Rango extra al atacar torres: son grandes y la tropa no siempre puede pegarse a su collider (celdas bloqueadas).")]
+    [SerializeField] private float structureRangeBonus = 0.75f;
+    [Tooltip("Si la tropa lleva este tiempo parada junto a la torre sin llegar a rango, ataca igualmente.")]
+    [SerializeField] private float structureStuckTime = 0.8f;
     private float nextStructureRepath;
+    private float structureStuckTimer;
+    private float lastStructureDistance = float.MaxValue;
 
     public override void OnEnter()
     {
         IsActive = true;
         nextStructureRepath = 0f;
+        structureStuckTimer = 0f;
+        lastStructureDistance = float.MaxValue;
         _controller.HurtStarted -= HandleHurtStarted;
         _controller.HurtStarted += HandleHurtStarted;
         _controller.HurtFinished -= HandleHurtFinished;
@@ -84,8 +92,23 @@ public class AttackState : States<TroopController>, ITroopAttack
         // Distancia hasta el BORDE del objetivo, no hasta su centro: con objetivos grandes
         // (torres) el centro puede estar lejos aunque la tropa ya esté pegada a la pared.
         float distance = DistanceToTarget(_controller.transform.position, target);
+        bool structure = IsStructure(target);
+        float range = AttackRangeFor(target);
 
-        if (distance > _controller.Stats.attackRange && IsStructure(target) && !waitingForHit)
+        // Sin acercarse más a la torre durante un rato (celdas bloqueadas): se da por buena la posición.
+        if (structure && distance > range && !waitingForHit)
+        {
+            if (distance < lastStructureDistance - 0.05f) structureStuckTimer = 0f;
+            else structureStuckTimer += Time.deltaTime;
+
+            lastStructureDistance = Mathf.Min(lastStructureDistance, distance);
+        }
+        else if (!structure) structureStuckTimer = 0f;
+
+        // Una vez dada por buena la posición, se mantiene durante todo el ataque.
+        if (structure && structureStuckTimer >= structureStuckTime) range = Mathf.Max(range, distance);
+
+        if (distance > range && structure && !waitingForHit)
         {
             // Torre: WalkState no sabe acercarse a ella, así que el propio estado
             // camina hasta el punto más cercano de su collider.
@@ -100,7 +123,7 @@ public class AttackState : States<TroopController>, ITroopAttack
             return;
         }
 
-        if (distance > _controller.Stats.attackRange)
+        if (distance > range)
         {
             // Si se sale a mitad de un ataque, el cooldown también cuenta.
             if (waitingForHit) StartCooldown();
@@ -331,7 +354,7 @@ public class AttackState : States<TroopController>, ITroopAttack
         return null;
     }
 
-    private static Vector2 GetBodyCenter(Transform t)
+    public static Vector2 GetBodyCenter(Transform t)
     {
         // Primer collider sólido (no trigger) de la tropa; los triggers suelen ser armas o rangos.
         Collider2D[] colliders = t.GetComponentsInChildren<Collider2D>();
@@ -341,6 +364,29 @@ public class AttackState : States<TroopController>, ITroopAttack
                 return c.bounds.center;
         }
         return t.position;
+    }
+
+    /// <summary>Rango de ataque contra este objetivo (las estructuras tienen un extra).</summary>
+    public float AttackRangeFor(Transform target)
+    {
+        float range = _controller.Stats != null ? _controller.Stats.attackRange : 0f;
+        return IsStructure(target) ? range + structureRangeBonus : range;
+    }
+
+    /// <summary>
+    /// Contra torres no se depende de que la hitbox toque el collider (es pequeño y está desplazado):
+    /// al abrirse la ventana de impacto, si la torre está a rango, el golpe cuenta.
+    /// </summary>
+    public bool TryApplyStructureHit()
+    {
+        if (!waitingForHit || damageAppliedThisAttack || _controller.IsHurt) return false;
+        if (targetHealth == null || targetHealth.IsDead || !IsStructure(targetHealth.transform)) return false;
+
+        float distance = DistanceToTarget(_controller.transform.position, targetHealth.transform);
+        bool stuck = structureStuckTimer >= structureStuckTime;
+        if (distance > AttackRangeFor(targetHealth.transform) && !stuck) return false;
+
+        return ApplyAttackDamageTo(targetHealth);
     }
 
     // ---------- Daño ----------

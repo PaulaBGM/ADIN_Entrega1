@@ -132,6 +132,23 @@ namespace FSM.Enemy
             Destroy(gameObject, timeToDestroy);
         }
 
+        /// <summary>El combate ha terminado (cayó una torre): la tropa se queda quieta.</summary>
+        public void EndBattle()
+        {
+            if (!enabled) return;
+
+            if (CurrentState != null) CurrentState.OnExit();
+            if (hurtRoutine != null) { StopCoroutine(hurtRoutine); hurtRoutine = null; }
+
+            IsHurt = false;
+            Target = null;
+            if (Mover != null) Mover.Stop();
+            SetMovementSpeed(0f);
+            ClearAttackAnimations();
+
+            enabled = false;
+        }
+
         public void ClearAttackAnimations()
         {
             if (Animator == null) return;

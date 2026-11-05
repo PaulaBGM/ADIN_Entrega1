@@ -8,7 +8,12 @@ public class ShootAttackState : States<TroopController>, ITroopAttack
     [SerializeField] private Transform firePoint;
     [SerializeField] private float arrowSpeed = 10f;
 
+    [Header("Torres")]
+    [SerializeField] private float structureRangeBonus = 0.75f;
+    [SerializeField] private float repathInterval = 0.4f;
+
     private float nextAttackTime;
+    private float nextRepath;
 
     public override void OnEnter()
     {
@@ -42,13 +47,33 @@ public class ShootAttackState : States<TroopController>, ITroopAttack
             return;
         }
 
-        float distance = Vector2.Distance(_controller.transform.position, target.position);
+        bool structure = AttackState.IsStructure(target);
+        float distance = structure
+            ? AttackState.DistanceToTarget(_controller.transform.position, target)
+            : Vector2.Distance(_controller.transform.position, target.position);
+        float range = _controller.Stats.attackRange + (structure ? structureRangeBonus : 0f);
 
-        if (distance > _controller.Stats.attackRange)
+        if (distance > range)
         {
             _controller.SetAttacking(false);
+
+            // Torre: el arquero tiene que acercarse hasta tenerla a tiro.
+            if (structure && _controller.Mover != null && Time.time >= nextRepath)
+            {
+                nextRepath = Time.time + repathInterval;
+                _controller.Mover.MoveTo(AttackState.GetBodyCenter(target));
+                _controller.SetMovementSpeed(_controller.Stats.movementSpeed);
+            }
             return;
         }
+
+        if (structure && _controller.Mover != null)
+        {
+            _controller.Mover.Stop();
+            _controller.SetMovementSpeed(0f);
+        }
+
+        if (_controller.Mover != null) _controller.Mover.FaceTowards(target.position);
 
         _controller.SetAttacking(true);
 
@@ -76,7 +101,8 @@ public class ShootAttackState : States<TroopController>, ITroopAttack
         }
 
         Vector2 origin = firePoint.position;
-        Vector2 destination = target.position;
+        // Torres: se apunta al centro de su collider (el pivote queda por encima y la flecha pasaría de largo).
+        Vector2 destination = AttackState.IsStructure(target) ? AttackState.GetBodyCenter(target) : (Vector2)target.position;
         Vector2 direction = (destination - origin).normalized;
 
         if (direction.sqrMagnitude == 0f)

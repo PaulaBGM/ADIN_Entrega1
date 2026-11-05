@@ -22,6 +22,15 @@ public class HealthSystem : MonoBehaviour
 
     private Coroutine knockbackCoroutine;
 
+    /// <summary>True cuando una torre/base ha caído: el combate ha terminado y nadie puede recibir más daño.</summary>
+    public static bool BattleOver { get; set; }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStatics() => BattleOver = false;
+
+    [Header("Torres / bases (objetivos sin TroopController)")]
+    [SerializeField] private float hideDelayWhenDestroyed = 0.8f;
+
     public event Action<float, float> OnHealthChanged;
     public event Action OnTroopDied;
 
@@ -30,6 +39,7 @@ public class HealthSystem : MonoBehaviour
     private TroopController troopController;
 
     public bool IsDead => isDead;
+    public bool IsStructure => troopController == null;
     public bool NeedsHealing => !isDead && currentHealth < maxHealth;
 
     private void Awake()
@@ -45,7 +55,7 @@ public class HealthSystem : MonoBehaviour
 
     public void TakeDamage(float amount)
     {
-        if (isDead || amount <= 0f)
+        if (isDead || amount <= 0f || BattleOver)
             return;
 
         float defense = troopController != null && troopController.Stats != null ? troopController.Stats.defense : 0f;
@@ -146,6 +156,37 @@ public class HealthSystem : MonoBehaviour
         troopController?.PlayDeathAnimation();
 
         OnTroopDied?.Invoke();
+
+        if (troopController == null) StructureDestroyed();
+    }
+
+    // Una torre/base ha caído: fin del combate.
+    private void StructureDestroyed()
+    {
+        BattleOver = true;
+        Debug.Log($"[FIN] {name} ha sido destruida. Fin del combate.", this);
+
+        foreach (TroopController troop in FindObjectsByType<TroopController>(FindObjectsSortMode.None))
+            troop.EndBattle();
+
+        StartCoroutine(HideAfterDelay());
+    }
+
+    private IEnumerator HideAfterDelay()
+    {
+        yield return new WaitForSeconds(hideDelayWhenDestroyed);
+        gameObject.SetActive(false);
+    }
+
+    /// <summary>Devuelve la vida al máximo y reactiva el objeto (para reiniciar la formación).</summary>
+    public void ResetHealth()
+    {
+        StopAllCoroutines();
+        isDead = false;
+        BattleOver = false;
+        gameObject.SetActive(true);
+        currentHealth = maxHealth;
+        OnHealthChanged?.Invoke(currentHealth, maxHealth);
     }
 
     public float GetCurrentHealth() => currentHealth;

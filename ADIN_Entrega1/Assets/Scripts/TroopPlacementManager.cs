@@ -84,6 +84,10 @@ public class TroopPlacementManager : MonoBehaviour
     private Transform divider;
     [SerializeField, Tooltip("Sin Tilemaps de zona: true = el jugador 1 ocupa la parte izquierda y el 2 la derecha.")]
     private bool player1OnLeft = true;
+
+    [Header("Bases (torres)")]
+    [SerializeField, Tooltip("Desactivado: las torres son las que ya están colocadas en la escena y el jugador no puede moverlas.")]
+    private bool allowMovingBases = false;
     [SerializeField, Min(0), Tooltip("Sin Tilemaps de zona: ancho (en celdas) de la franja neutra centrada en la línea de división. Nadie puede colocar tropas ahí.")]
     private int neutralCells = 0;
 
@@ -185,6 +189,8 @@ public class TroopPlacementManager : MonoBehaviour
             for (int x = 0; x < gridSize.x; x++)
                 zoneOwner[y * gridSize.x + x] = ComputeZoneOwner(new Vector2Int(x, y));
 
+        AutoAssignSceneBases();
+
         // Celda inicial de cada base y punto al que irán las tropas enemigas
         for (int pi = 0; pi < players.Count; pi++)
         {
@@ -205,6 +211,20 @@ public class TroopPlacementManager : MonoBehaviour
                 else
                 {
                     Debug.LogWarning($"[TroopPlacementManager] No hay celdas libres en el campo de {p.name} para su base.");
+                }
+            }
+            else if (p.baseTransform != null && !allowMovingBases)
+            {
+                // Torre ya colocada en la escena: no se mueve. Las tropas enemigas van a su collider
+                // y sus celdas quedan reservadas para que no se pueda colocar nada encima.
+                Vector2 body = AttackState.GetBodyCenter(p.baseTransform);
+                go.transform.position = new Vector3(body.x, body.y, p.baseTransform.position.z);
+
+                Vector3 shiftedBody = new Vector3(body.x - BaseShift, body.y - BaseShift, 0f);
+                if (terrain.TryWorldToCell(shiftedBody, out Vector2Int bc))
+                {
+                    p.baseCell = bc;
+                    p.hasBaseCell = true;
                 }
             }
             else if (p.baseTransform != null)
@@ -296,7 +316,7 @@ public class TroopPlacementManager : MonoBehaviour
                 if (key != PlacementKey.None && PlacementInput.WasPressed(key)) Select(pi, oi);
             }
 
-            if (p.baseKey != PlacementKey.None && PlacementInput.WasPressed(p.baseKey)) Select(pi, -1);
+            if (allowMovingBases && p.baseKey != PlacementKey.None && PlacementInput.WasPressed(p.baseKey)) Select(pi, -1);
         }
     }
 
@@ -507,6 +527,34 @@ public class TroopPlacementManager : MonoBehaviour
         placed[cell] = new PlacedTroop { player = player, option = optionIndex, go = go };
     }
 
+    // Si las torres están en la escena pero no enlazadas en la lista de jugadores, se asignan solas:
+    // la de la izquierda es del jugador que está a la izquierda (player1OnLeft).
+    private void AutoAssignSceneBases()
+    {
+        if (players.Count != 2) return;
+        if (players[0].basePrefab != null || players[1].basePrefab != null) return;
+        if (players[0].baseTransform != null && players[1].baseTransform != null) return;
+
+        var towers = new List<HealthSystem>();
+        foreach (HealthSystem h in FindObjectsByType<HealthSystem>(FindObjectsSortMode.None))
+            if (h.IsStructure) towers.Add(h);
+
+        if (towers.Count < 2)
+        {
+            Debug.LogWarning("[TroopPlacementManager] No hay dos torres en la escena: las tropas no tendrán objetivo.");
+            return;
+        }
+
+        towers.Sort((a, b) => a.transform.position.x.CompareTo(b.transform.position.x));
+        HealthSystem left = towers[0];
+        HealthSystem right = towers[towers.Count - 1];
+
+        players[player1OnLeft ? 0 : 1].baseTransform = left.transform;
+        players[player1OnLeft ? 1 : 0].baseTransform = right.transform;
+
+        Debug.Log($"[TroopPlacementManager] Torres de la escena asignadas: {players[0].name} -> {players[0].baseTransform.name}, {players[1].name} -> {players[1].baseTransform.name}.");
+    }
+
     private void MoveBase(int player, Vector2Int cell)
     {
         var p = players[player];
@@ -560,6 +608,8 @@ public class TroopPlacementManager : MonoBehaviour
             return;
         }
 
+        HealthSystem.BattleOver = false;
+
         foreach (var troop in placed.Values)
         {
             if (troop.go == null) continue;
@@ -579,6 +629,8 @@ public class TroopPlacementManager : MonoBehaviour
     /// <summary>Borra el combate y vuelve a crear la misma formación, lista para otra prueba.</summary>
     private void ResetToPlacement()
     {
+        ReviveBases();
+
         var layout = new List<(Vector2Int cell, int player, int option)>();
 
         foreach (var kv in placed)
@@ -595,8 +647,21 @@ public class TroopPlacementManager : MonoBehaviour
         overlayDirty = true;
     }
 
+    // Si una torre cayó en el combate anterior, vuelve con toda la vida.
+    private void ReviveBases()
+    {
+        foreach (var p in players)
+        {
+            if (p.baseTransform == null) continue;
+            HealthSystem hs = p.baseTransform.GetComponent<HealthSystem>();
+            if (hs != null) hs.ResetHealth();
+        }
+        HealthSystem.BattleOver = false;
+    }
+
     private void ClearAll()
     {
+        ReviveBases();
         foreach (var troop in placed.Values)
             if (troop.go != null) Destroy(troop.go);
 
@@ -760,8 +825,11 @@ public class TroopPlacementManager : MonoBehaviour
                 }
 
                 bool baseOn = activePlayer == pi && activeOption == -1;
+                if (allowMovingBases)
+                {
                 string baseLabel = p.baseKey == PlacementKey.None ? "Mover base" : $"{KeyLabel(p.baseKey)} · Mover base";
                 if (GUILayout.Toggle(baseOn, baseLabel, GUI.skin.button) && !baseOn) Select(pi, -1);
+                }
 
                 GUILayout.EndHorizontal();
             }
