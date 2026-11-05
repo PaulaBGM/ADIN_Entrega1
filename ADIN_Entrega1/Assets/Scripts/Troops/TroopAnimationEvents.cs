@@ -18,6 +18,7 @@ public class TroopAnimationEvents : MonoBehaviour
     private Vector2 baseHitboxSize;
 
     private bool hitDetectedThisSwing;
+    private bool swingOpen;
     private ContactFilter2D filter;
     private readonly Collider2D[] results = new Collider2D[16];
 
@@ -81,6 +82,7 @@ public class TroopAnimationEvents : MonoBehaviour
             return;
 
         hitDetectedThisSwing = false;
+        swingOpen = true;
         attackCollider.enabled = true;
 
         // Torres: el golpe cuenta si están a rango, aunque la hitbox no llegue a tocar su collider.
@@ -94,11 +96,26 @@ public class TroopAnimationEvents : MonoBehaviour
     // Animation Event: termina la ventana de impacto.
     public void EndAttackHitbox()
     {
+        ResolveSwing();
         DisableAttackHitbox();
+    }
+
+    // Si la hitbox no tocó a nadie pero el objetivo está a rango, el golpe cuenta igualmente.
+    private void ResolveSwing()
+    {
+        if (!swingOpen) return;
+        swingOpen = false;
+
+        if (hitDetectedThisSwing || troopController == null || troopController.IsHurt || troopController.AttackState == null) return;
+
+        if (troopController.AttackState.TryApplyInRangeHit())
+            hitDetectedThisSwing = true;
     }
 
     public void DisableAttackHitbox()
     {
+        swingOpen = false;
+
         if (attackCollider != null)
             attackCollider.enabled = false;
     }
@@ -106,6 +123,7 @@ public class TroopAnimationEvents : MonoBehaviour
     // Animation Event: termina el clip de ataque.
     public void FinishAttackAnimation()
     {
+        ResolveSwing();
         DisableAttackHitbox();
 
         if (troopController == null || troopController.AttackState == null)

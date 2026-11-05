@@ -6,6 +6,8 @@ public class WalkState : States<TroopController>
     [Header("Configuración")]
     [SerializeField] private LayerMask enemyLayer;
     [SerializeField, Min(0.01f)] private float checkInterval = 0.25f;
+    [Tooltip("Mientras quede alguna tropa enemiga viva, va a por ella (aunque esté lejos) en vez de a la torre.")]
+    [SerializeField] private bool huntAllEnemiesBeforeTower = true;
 
     [Header("Torre enemiga")]
     [Tooltip("Opcional. Capa de las torres. Si se deja vacía, la torre enemiga es la estructura " +
@@ -97,6 +99,10 @@ public class WalkState : States<TroopController>
             nextCheck = Time.time + checkInterval;
 
             HealthSystem closest = FindClosestEnemy();
+
+            // Hasta que no quede ninguna tropa enemiga no se va a por la torre.
+            if (closest == null && huntAllEnemiesBeforeTower)
+                closest = FindClosestEnemy(10000f);
 
             if (closest != null)
             {
@@ -282,14 +288,14 @@ public class WalkState : States<TroopController>
     }
 
     // Solo TROPAS enemigas: la torre se trata aparte para que las tropas tengan prioridad.
-    private HealthSystem FindClosestEnemy()
+    private HealthSystem FindClosestEnemy(float radiusOverride = -1f)
     {
         TroopStats stats = _controller.Stats;
 
         if (stats == null)
             return null;
 
-        float radius = stats.huntEnemiesAnywhere ? stats.huntRange : stats.detectionRange;
+        float radius = radiusOverride > 0f ? radiusOverride : (stats.huntEnemiesAnywhere ? stats.huntRange : stats.detectionRange);
 
         Collider2D[] hits = Physics2D.OverlapCircleAll(_controller.transform.position, radius, enemyLayer);
 
@@ -307,6 +313,10 @@ public class WalkState : States<TroopController>
                 continue;
 
             if (AttackState.IsStructure(health.transform))
+                continue;
+
+            // Mismo bando (misma capa que esta tropa): p. ej. el AttackCollider del lancero puede estar en la capa enemiga.
+            if (health.gameObject.layer == _controller.gameObject.layer)
                 continue;
 
             float distance = ((Vector2)health.transform.position - (Vector2)_controller.transform.position).sqrMagnitude;

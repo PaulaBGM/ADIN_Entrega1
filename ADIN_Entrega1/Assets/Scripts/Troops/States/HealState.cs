@@ -369,6 +369,8 @@ public class HealState : States<TroopController>
                 continue;
             if (needsHealing && !health.NeedsHealing)
                 continue;
+            if (!needsHealing && health.gameObject.layer == _controller.gameObject.layer)
+                continue;   // para atacar: nunca a un aliado
 
             float distance = Vector2.Distance(_controller.transform.position, health.transform.position);
             if (distance < bestDistance)

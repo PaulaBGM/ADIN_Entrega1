@@ -184,6 +184,13 @@ public class AttackState : States<TroopController>, ITroopAttack
             return false;
         }
 
+        // Nunca se ataca a un aliado (misma capa que esta tropa).
+        if (!IsStructure(health.transform) && health.gameObject.layer == _controller.gameObject.layer)
+        {
+            targetHealth = null;
+            return false;
+        }
+
         targetHealth = health;
         return true;
     }
@@ -423,6 +430,21 @@ public class AttackState : States<TroopController>, ITroopAttack
 
         float distance = DistanceToTarget(_controller.transform.position, targetHealth.transform);
         if (distance > AttackRangeFor(targetHealth.transform) || !HeightOk(targetHealth.transform)) return false;
+
+        return ApplyAttackDamageTo(targetHealth);
+    }
+
+    /// <summary>
+    /// Red de seguridad al cerrarse la ventana de impacto: si la hitbox no llegó a tocar al objetivo
+    /// pero este está a rango (y a la misma altura), el golpe cuenta igualmente.
+    /// </summary>
+    public bool TryApplyInRangeHit()
+    {
+        if (!waitingForHit || damageAppliedThisAttack || _controller.IsHurt) return false;
+        if (targetHealth == null || targetHealth.IsDead) return false;
+
+        Transform t = targetHealth.transform;
+        if (DistanceToTarget(_controller.transform.position, t) > AttackRangeFor(t) || !HeightOk(t)) return false;
 
         return ApplyAttackDamageTo(targetHealth);
     }

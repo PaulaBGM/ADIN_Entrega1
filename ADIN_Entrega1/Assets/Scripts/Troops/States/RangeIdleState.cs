@@ -55,6 +55,9 @@ public class RangedIdleState : States<TroopController>
             if (health == null || health.IsDead || health == ownHealth)
                 continue;
 
+            if (health.gameObject.layer == _controller.gameObject.layer)
+                continue;   // mismo bando
+
             float distance =
                 ((Vector2)health.transform.position -
                  (Vector2)_controller.transform.position).sqrMagnitude;
@@ -101,7 +104,8 @@ public class RangedIdleState : States<TroopController>
 
             if (health != null &&
                 !health.IsDead &&
-                health != ownHealth)
+                health != ownHealth &&
+                health.gameObject.layer != _controller.gameObject.layer)
             {
                 enemiesAlive = true;
 

@@ -45,7 +45,14 @@ public class AttackState : States<TroopController>, ITroopAttack
 
     [Header("Estructuras (torres)")]
     [SerializeField] private float structureRepathInterval = 0.4f;
+    [Tooltip("Margen pequeño sobre el rango normal al atacar torres (la tropa se para en el centro de una celda). Si ves que ataca desde lejos, bájalo a 0.")]
+    [SerializeField] private float structureRangeBonus = 0.25f;
     private float nextStructureRepath;
+
+    [Header("Alturas")]
+    [Tooltip("Si está activo, solo se puede atacar a un objetivo que esté en la misma altura (o con como mucho esta diferencia).")]
+    [SerializeField] private bool useHeights = true;
+    [SerializeField] private int maxHeightDifference = 0;
 
     public override void OnEnter()
     {
@@ -84,8 +91,11 @@ public class AttackState : States<TroopController>, ITroopAttack
         // Distancia hasta el BORDE del objetivo, no hasta su centro: con objetivos grandes
         // (torres) el centro puede estar lejos aunque la tropa ya esté pegada a la pared.
         float distance = DistanceToTarget(_controller.transform.position, target);
+        bool structure = IsStructure(target);
+        float range = AttackRangeFor(target);
+        bool heightOk = HeightOk(target);
 
-        if (distance > _controller.Stats.attackRange && IsStructure(target) && !waitingForHit)
+        if ((distance > range || !heightOk) && structure && !waitingForHit)
         {
             // Torre: WalkState no sabe acercarse a ella, así que el propio estado
             // camina hasta el punto más cercano de su collider.
@@ -94,13 +104,14 @@ public class AttackState : States<TroopController>, ITroopAttack
                 nextStructureRepath = Time.time + structureRepathInterval;
                 Collider2D body = GetBodyCollider(target);
                 Vector2 point = body != null ? body.ClosestPoint(_controller.transform.position) : (Vector2)target.position;
-                _controller.Mover.MoveTo(point);
+                Vector3 destination = heightOk ? (Vector3)point : ChasePoint(target);   // otra altura: ir a una celda de su nivel
+                _controller.Mover.MoveTo(destination);
                 _controller.SetMovementSpeed(_controller.Stats.movementSpeed);
             }
             return;
         }
 
-        if (distance > _controller.Stats.attackRange)
+        if (distance > range || (!heightOk && !waitingForHit))
         {
             // Si se sale a mitad de un ataque, el cooldown también cuenta.
             if (waitingForHit) StartCooldown();
@@ -168,6 +179,13 @@ public class AttackState : States<TroopController>, ITroopAttack
 
         HealthSystem health = target.GetComponentInParent<HealthSystem>();
         if (health == null || health.IsDead)
+        {
+            targetHealth = null;
+            return false;
+        }
+
+        // Nunca se ataca a un aliado (misma capa que esta tropa).
+        if (!IsStructure(health.transform) && health.gameObject.layer == _controller.gameObject.layer)
         {
             targetHealth = null;
             return false;
@@ -331,7 +349,7 @@ public class AttackState : States<TroopController>, ITroopAttack
         return null;
     }
 
-    private static Vector2 GetBodyCenter(Transform t)
+    public static Vector2 GetBodyCenter(Transform t)
     {
         // Primer collider sólido (no trigger) de la tropa; los triggers suelen ser armas o rangos.
         Collider2D[] colliders = t.GetComponentsInChildren<Collider2D>();
@@ -341,6 +359,79 @@ public class AttackState : States<TroopController>, ITroopAttack
                 return c.bounds.center;
         }
         return t.position;
+    }
+
+    // ---------- Alturas ----------
+
+    private static TerrainGridBaker terrainBaker;
+
+    private static TerrainGridBaker TerrainBaker
+    {
+        get
+        {
+            if (terrainBaker == null) terrainBaker = FindFirstObjectByType<TerrainGridBaker>();
+            return terrainBaker;
+        }
+    }
+
+    /// <summary>True si 'from' y el objetivo están en la misma altura (o con la diferencia permitida). Sin datos de altura, true.</summary>
+    public static bool SameHeight(Vector3 from, Transform target, int maxDifference = 0)
+    {
+        TerrainGridBaker tg = TerrainBaker;
+        if (tg == null || target == null) return true;
+        if (!tg.TryGetLevel(from, out int a)) return true;
+
+        Vector3 p = IsStructure(target) ? (Vector3)GetBodyCenter(target) : target.position;
+        if (!tg.TryGetLevel(p, out int b)) return true;
+
+        return Mathf.Abs(a - b) <= maxDifference;
+    }
+
+    /// <summary>Punto al que ir para atacar al objetivo: una celda de su altura si está en otro nivel.</summary>
+    public static Vector3 ApproachPoint(Vector3 from, Transform target, float radius, int maxDifference = 0)
+    {
+        Vector3 plain = IsStructure(target) ? (Vector3)GetBodyCenter(target) : target.position;
+
+        TerrainGridBaker tg = TerrainBaker;
+        if (tg == null || !tg.TryGetLevel(plain, out int b)) return plain;
+        if (tg.TryGetLevel(from, out int a) && Mathf.Abs(a - b) <= maxDifference) return plain;
+
+        return tg.TryFindStandPoint(plain, b, radius, out Vector3 stand) ? stand : plain;
+    }
+
+    public bool HeightOk(Transform target)
+    {
+        return !useHeights || SameHeight(_controller.transform.position, target, maxHeightDifference);
+    }
+
+    /// <summary>Destino al perseguir a este objetivo (respeta las alturas).</summary>
+    public Vector3 ChasePoint(Transform target)
+    {
+        Vector3 plain = IsStructure(target) ? (Vector3)GetBodyCenter(target) : target.position;
+        if (!useHeights || _controller.Stats == null) return plain;
+        return ApproachPoint(_controller.transform.position, target, _controller.Stats.attackRange + 2f, maxHeightDifference);
+    }
+
+    /// <summary>Rango de ataque contra este objetivo (las estructuras tienen un extra).</summary>
+    public float AttackRangeFor(Transform target)
+    {
+        float range = _controller.Stats != null ? _controller.Stats.attackRange : 0f;
+        return IsStructure(target) ? range + structureRangeBonus : range;
+    }
+
+    /// <summary>
+    /// Contra torres no se depende de que la hitbox toque el collider (es pequeño y está desplazado):
+    /// al abrirse la ventana de impacto, si la torre está a rango, el golpe cuenta.
+    /// </summary>
+    public bool TryApplyStructureHit()
+    {
+        if (!waitingForHit || damageAppliedThisAttack || _controller.IsHurt) return false;
+        if (targetHealth == null || targetHealth.IsDead || !IsStructure(targetHealth.transform)) return false;
+
+        float distance = DistanceToTarget(_controller.transform.position, targetHealth.transform);
+        if (distance > AttackRangeFor(targetHealth.transform) || !HeightOk(targetHealth.transform)) return false;
+
+        return ApplyAttackDamageTo(targetHealth);
     }
 
     // ---------- Daño ----------

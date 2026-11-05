@@ -82,6 +82,13 @@ public class TroopAnimationEvents : MonoBehaviour
 
         hitDetectedThisSwing = false;
         attackCollider.enabled = true;
+
+        // Torres: el golpe cuenta si están a rango, aunque la hitbox no llegue a tocar su collider.
+        if (troopController.AttackState != null && troopController.AttackState.TryApplyStructureHit())
+        {
+            hitDetectedThisSwing = true;
+            DisableAttackHitbox();
+        }
     }
 
     // Animation Event: termina la ventana de impacto.
