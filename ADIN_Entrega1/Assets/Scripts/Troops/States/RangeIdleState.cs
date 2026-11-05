@@ -9,10 +9,12 @@ public class RangedIdleState : States<TroopController>
     [SerializeField] private float checkInterval = 0.25f;
 
     private float nextCheck;
+    private bool hunting;
 
     public override void OnEnter()
     {
         nextCheck = 0f;
+        hunting = false;
 
         if (_controller.Mover != null)
             _controller.Mover.Stop();
@@ -89,6 +91,8 @@ public class RangedIdleState : States<TroopController>
         );
 
         bool enemiesAlive = false;
+        Transform nearestEnemy = null;
+        float nearestDistance = float.MaxValue;
 
         foreach (Collider2D hit in allEnemies)
         {
@@ -100,8 +104,36 @@ public class RangedIdleState : States<TroopController>
                 health != ownHealth)
             {
                 enemiesAlive = true;
-                break;
+
+                float d = ((Vector2)health.transform.position - (Vector2)_controller.transform.position).sqrMagnitude;
+                if (d < nearestDistance)
+                {
+                    nearestDistance = d;
+                    nearestEnemy = health.transform;
+                }
             }
+        }
+
+        // Solo quedan arqueros y monjes: nadie va a venir a por ellos, así que salen a buscar al enemigo
+        // más cercano. Cuando entra en detectionRange, el bloque de arriba pasa a disparar.
+        if (enemiesAlive && nearestEnemy != null && TroopController.OnlyRangedAndHealersLeft())
+        {
+            hunting = true;
+
+            if (_controller.Mover != null)
+            {
+                _controller.Mover.MoveTo(nearestEnemy.position);
+                _controller.SetMovementSpeed(_controller.Stats.movementSpeed);
+            }
+            return;
+        }
+
+        // Ya no hace falta salir a cazar (vuelve a haber tropas cuerpo a cuerpo): se queda a cubierto.
+        if (hunting)
+        {
+            hunting = false;
+            if (_controller.Mover != null) _controller.Mover.Stop();
+            _controller.SetMovementSpeed(0f);
         }
 
         // Si no quedan enemigos vivos, avanza hacia la base.

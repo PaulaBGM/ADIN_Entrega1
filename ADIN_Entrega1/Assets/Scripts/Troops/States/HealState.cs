@@ -128,12 +128,15 @@ public class HealState : States<TroopController>
         // Hasta el borde del objetivo: así el monje también puede golpear una torre.
         float distance = AttackState.DistanceToTarget(_controller.transform.position, target);
 
-        if (distance > range)
+        // Alturas: tampoco cura ni ataca a quien está en otro nivel; sube o baja hasta él.
+        bool heightOk = AttackState.SameHeight(_controller.transform.position, target);
+
+        if (distance > range || !heightOk)
         {
             if (Time.time >= nextRepath)
             {
                 nextRepath = Time.time + repathInterval;
-                _controller.Mover.MoveTo(target.position);
+                _controller.Mover.MoveTo(heightOk ? target.position : AttackState.ApproachPoint(_controller.transform.position, target, range + 2f));
                 _controller.SetMovementSpeed(_controller.Stats.movementSpeed);
             }
             return;
@@ -290,7 +293,8 @@ public class HealState : States<TroopController>
             return;
         }
 
-        bool shouldAttack = canAttack && (!attackOnlyWhenNoAllies || !HasLivingAllyTroops());
+        bool onlySupportLeft = TroopController.OnlyRangedAndHealersLeft();
+        bool shouldAttack = canAttack && (!attackOnlyWhenNoAllies || !HasLivingAllyTroops() || onlySupportLeft);
 
         if (shouldAttack != attackMode)
         {
@@ -303,7 +307,8 @@ public class HealState : States<TroopController>
 
         if (attackMode)
         {
-            HealthSystem enemy = FindClosest(enemyLayer, needsHealing: false);
+            // Si solo quedan arqueros y monjes, el monje sale a buscar al enemigo aunque esté lejos.
+            HealthSystem enemy = FindClosest(enemyLayer, needsHealing: false, onlySupportLeft ? 1000f : -1f);
             if (enemy != null)
             {
                 SetTarget(enemy, MonkAction.Attack);
@@ -343,13 +348,13 @@ public class HealState : States<TroopController>
         return dmg > 0f ? dmg : _controller.Stats.healingPower;
     }
 
-    private HealthSystem FindClosest(LayerMask mask, bool needsHealing)
+    private HealthSystem FindClosest(LayerMask mask, bool needsHealing, float radius = -1f)
     {
         if (mask.value == 0) return null;
 
         Collider2D[] hits = Physics2D.OverlapCircleAll(
             _controller.transform.position,
-            _controller.Stats.detectionRange,
+            radius > 0f ? radius : _controller.Stats.detectionRange,
             mask
         );
 

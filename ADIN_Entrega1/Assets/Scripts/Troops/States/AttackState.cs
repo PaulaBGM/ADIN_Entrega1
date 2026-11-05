@@ -45,20 +45,19 @@ public class AttackState : States<TroopController>, ITroopAttack
 
     [Header("Estructuras (torres)")]
     [SerializeField] private float structureRepathInterval = 0.4f;
-    [Tooltip("Rango extra al atacar torres: son grandes y la tropa no siempre puede pegarse a su collider (celdas bloqueadas).")]
-    [SerializeField] private float structureRangeBonus = 0.75f;
-    [Tooltip("Si la tropa lleva este tiempo parada junto a la torre sin llegar a rango, ataca igualmente.")]
-    [SerializeField] private float structureStuckTime = 0.8f;
+    [Tooltip("Margen pequeño sobre el rango normal al atacar torres (la tropa se para en el centro de una celda). Si ves que ataca desde lejos, bájalo a 0.")]
+    [SerializeField] private float structureRangeBonus = 0.25f;
     private float nextStructureRepath;
-    private float structureStuckTimer;
-    private float lastStructureDistance = float.MaxValue;
+
+    [Header("Alturas")]
+    [Tooltip("Si está activo, solo se puede atacar a un objetivo que esté en la misma altura (o con como mucho esta diferencia).")]
+    [SerializeField] private bool useHeights = true;
+    [SerializeField] private int maxHeightDifference = 0;
 
     public override void OnEnter()
     {
         IsActive = true;
         nextStructureRepath = 0f;
-        structureStuckTimer = 0f;
-        lastStructureDistance = float.MaxValue;
         _controller.HurtStarted -= HandleHurtStarted;
         _controller.HurtStarted += HandleHurtStarted;
         _controller.HurtFinished -= HandleHurtFinished;
@@ -94,21 +93,9 @@ public class AttackState : States<TroopController>, ITroopAttack
         float distance = DistanceToTarget(_controller.transform.position, target);
         bool structure = IsStructure(target);
         float range = AttackRangeFor(target);
+        bool heightOk = HeightOk(target);
 
-        // Sin acercarse más a la torre durante un rato (celdas bloqueadas): se da por buena la posición.
-        if (structure && distance > range && !waitingForHit)
-        {
-            if (distance < lastStructureDistance - 0.05f) structureStuckTimer = 0f;
-            else structureStuckTimer += Time.deltaTime;
-
-            lastStructureDistance = Mathf.Min(lastStructureDistance, distance);
-        }
-        else if (!structure) structureStuckTimer = 0f;
-
-        // Una vez dada por buena la posición, se mantiene durante todo el ataque.
-        if (structure && structureStuckTimer >= structureStuckTime) range = Mathf.Max(range, distance);
-
-        if (distance > range && structure && !waitingForHit)
+        if ((distance > range || !heightOk) && structure && !waitingForHit)
         {
             // Torre: WalkState no sabe acercarse a ella, así que el propio estado
             // camina hasta el punto más cercano de su collider.
@@ -117,13 +104,14 @@ public class AttackState : States<TroopController>, ITroopAttack
                 nextStructureRepath = Time.time + structureRepathInterval;
                 Collider2D body = GetBodyCollider(target);
                 Vector2 point = body != null ? body.ClosestPoint(_controller.transform.position) : (Vector2)target.position;
-                _controller.Mover.MoveTo(point);
+                Vector3 destination = heightOk ? (Vector3)point : ChasePoint(target);   // otra altura: ir a una celda de su nivel
+                _controller.Mover.MoveTo(destination);
                 _controller.SetMovementSpeed(_controller.Stats.movementSpeed);
             }
             return;
         }
 
-        if (distance > range)
+        if (distance > range || (!heightOk && !waitingForHit))
         {
             // Si se sale a mitad de un ataque, el cooldown también cuenta.
             if (waitingForHit) StartCooldown();
@@ -366,6 +354,57 @@ public class AttackState : States<TroopController>, ITroopAttack
         return t.position;
     }
 
+    // ---------- Alturas ----------
+
+    private static TerrainGridBaker terrainBaker;
+
+    private static TerrainGridBaker TerrainBaker
+    {
+        get
+        {
+            if (terrainBaker == null) terrainBaker = FindFirstObjectByType<TerrainGridBaker>();
+            return terrainBaker;
+        }
+    }
+
+    /// <summary>True si 'from' y el objetivo están en la misma altura (o con la diferencia permitida). Sin datos de altura, true.</summary>
+    public static bool SameHeight(Vector3 from, Transform target, int maxDifference = 0)
+    {
+        TerrainGridBaker tg = TerrainBaker;
+        if (tg == null || target == null) return true;
+        if (!tg.TryGetLevel(from, out int a)) return true;
+
+        Vector3 p = IsStructure(target) ? (Vector3)GetBodyCenter(target) : target.position;
+        if (!tg.TryGetLevel(p, out int b)) return true;
+
+        return Mathf.Abs(a - b) <= maxDifference;
+    }
+
+    /// <summary>Punto al que ir para atacar al objetivo: una celda de su altura si está en otro nivel.</summary>
+    public static Vector3 ApproachPoint(Vector3 from, Transform target, float radius, int maxDifference = 0)
+    {
+        Vector3 plain = IsStructure(target) ? (Vector3)GetBodyCenter(target) : target.position;
+
+        TerrainGridBaker tg = TerrainBaker;
+        if (tg == null || !tg.TryGetLevel(plain, out int b)) return plain;
+        if (tg.TryGetLevel(from, out int a) && Mathf.Abs(a - b) <= maxDifference) return plain;
+
+        return tg.TryFindStandPoint(plain, b, radius, out Vector3 stand) ? stand : plain;
+    }
+
+    public bool HeightOk(Transform target)
+    {
+        return !useHeights || SameHeight(_controller.transform.position, target, maxHeightDifference);
+    }
+
+    /// <summary>Destino al perseguir a este objetivo (respeta las alturas).</summary>
+    public Vector3 ChasePoint(Transform target)
+    {
+        Vector3 plain = IsStructure(target) ? (Vector3)GetBodyCenter(target) : target.position;
+        if (!useHeights || _controller.Stats == null) return plain;
+        return ApproachPoint(_controller.transform.position, target, _controller.Stats.attackRange + 2f, maxHeightDifference);
+    }
+
     /// <summary>Rango de ataque contra este objetivo (las estructuras tienen un extra).</summary>
     public float AttackRangeFor(Transform target)
     {
@@ -383,8 +422,7 @@ public class AttackState : States<TroopController>, ITroopAttack
         if (targetHealth == null || targetHealth.IsDead || !IsStructure(targetHealth.transform)) return false;
 
         float distance = DistanceToTarget(_controller.transform.position, targetHealth.transform);
-        bool stuck = structureStuckTimer >= structureStuckTime;
-        if (distance > AttackRangeFor(targetHealth.transform) && !stuck) return false;
+        if (distance > AttackRangeFor(targetHealth.transform) || !HeightOk(targetHealth.transform)) return false;
 
         return ApplyAttackDamageTo(targetHealth);
     }

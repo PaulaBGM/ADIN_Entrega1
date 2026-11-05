@@ -9,7 +9,7 @@ public class ShootAttackState : States<TroopController>, ITroopAttack
     [SerializeField] private float arrowSpeed = 10f;
 
     [Header("Torres")]
-    [SerializeField] private float structureRangeBonus = 0.75f;
+    [SerializeField] private float structureRangeBonus = 0.25f;
     [SerializeField] private float repathInterval = 0.4f;
 
     private float nextAttackTime;
@@ -57,17 +57,17 @@ public class ShootAttackState : States<TroopController>, ITroopAttack
         {
             _controller.SetAttacking(false);
 
-            // Torre: el arquero tiene que acercarse hasta tenerla a tiro.
-            if (structure && _controller.Mover != null && Time.time >= nextRepath)
+            // Torre, o solo quedan arqueros y monjes: el arquero se acerca hasta tener el objetivo a tiro.
+            if ((structure || TroopController.OnlyRangedAndHealersLeft()) && _controller.Mover != null && Time.time >= nextRepath)
             {
                 nextRepath = Time.time + repathInterval;
-                _controller.Mover.MoveTo(AttackState.GetBodyCenter(target));
+                _controller.Mover.MoveTo(structure ? AttackState.GetBodyCenter(target) : (Vector2)target.position);
                 _controller.SetMovementSpeed(_controller.Stats.movementSpeed);
             }
             return;
         }
 
-        if (structure && _controller.Mover != null)
+        if (_controller.Mover != null && _controller.Mover.IsMoving)
         {
             _controller.Mover.Stop();
             _controller.SetMovementSpeed(0f);

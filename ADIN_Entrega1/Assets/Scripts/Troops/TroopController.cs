@@ -132,6 +132,28 @@ namespace FSM.Enemy
             Destroy(gameObject, timeToDestroy);
         }
 
+        /// <summary>
+        /// True si todas las tropas vivas (de los dos equipos) son arqueros o monjes, es decir, ninguna
+        /// tiene AttackState cuerpo a cuerpo. En ese caso nadie va a venir a por ellos: hay que acercarse.
+        /// </summary>
+        public static bool OnlyRangedAndHealersLeft()
+        {
+            bool any = false;
+
+            foreach (TroopController t in FindObjectsByType<TroopController>(FindObjectsSortMode.None))
+            {
+                if (!t.enabled) continue;
+
+                HealthSystem h = t.GetComponent<HealthSystem>();
+                if (h == null || h.IsDead) continue;
+
+                any = true;
+                if (t.AttackState != null) return false;
+            }
+
+            return any;
+        }
+
         /// <summary>El combate ha terminado (cayó una torre): la tropa se queda quieta.</summary>
         public void EndBattle()
         {

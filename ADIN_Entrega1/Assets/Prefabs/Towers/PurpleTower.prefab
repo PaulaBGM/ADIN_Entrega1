@@ -85,6 +85,7 @@ MonoBehaviour:
   particleSpawnPoint: {fileID: 2331099385174708778}
   knockbackDistance: 0.15
   knockbackDuration: 0.1
+  hideDelayWhenDestroyed: 0.8
 --- !u!61 &1429357489516527429
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -119,7 +120,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: -0.006395817, y: -1.15}
+  m_Offset: {x: -0.0146000385, y: -0.9859129}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -129,7 +130,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 2, y: 1.41}
+  m_Size: {x: 1.5569644, y: 1.081826}
   m_EdgeRadius: 0
 --- !u!1 &8309435495032976372
 GameObject:

@@ -145,6 +145,56 @@ public class TerrainGridBaker : MonoBehaviour
         return walkable[cell.y * size.x + cell.x];
     }
 
+    /// <summary>Nivel de altura de la celda que contiene el punto. False si no hay suelo o esta fuera de la rejilla.</summary>
+    public bool TryGetLevel(Vector3 world, out int level)
+    {
+        level = 0;
+        if (levels == null || !TryWorldToCell(world, out Vector2Int c)) return false;
+
+        int l = levels[c.y * size.x + c.x];
+        if (l == NoGround) return false;
+
+        level = l;
+        return true;
+    }
+
+    /// <summary>
+    /// Celda caminable de un nivel concreto, lo mas cercana posible a 'target' (dentro de maxRadius).
+    /// Sirve para ir a atacar a alguien que esta en otra altura: hay que subir/bajar hasta su nivel.
+    /// </summary>
+    public bool TryFindStandPoint(Vector3 target, int level, float maxRadius, out Vector3 point)
+    {
+        point = default;
+        if (walkable == null || levels == null || !TryWorldToCell(target, out Vector2Int tc)) return false;
+
+        int r = Mathf.Max(1, Mathf.CeilToInt(maxRadius / cellSize));
+        float best = float.MaxValue;
+        bool found = false;
+
+        for (int dy = -r; dy <= r; dy++)
+        {
+            for (int dx = -r; dx <= r; dx++)
+            {
+                int x = tc.x + dx, y = tc.y + dy;
+                if (x < 0 || y < 0 || x >= size.x || y >= size.y) continue;
+
+                int i = y * size.x + x;
+                if (!walkable[i] || levels[i] != level) continue;
+
+                Vector2 c = CellCenter(x, y);
+                float d = (c - (Vector2)target).sqrMagnitude;
+                if (d < best)
+                {
+                    best = d;
+                    point = new Vector3(c.x, c.y, 0f);
+                    found = true;
+                }
+            }
+        }
+
+        return found;
+    }
+
     // ------------------------------------------------------------------
 
     private bool Compute()

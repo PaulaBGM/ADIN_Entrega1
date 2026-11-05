@@ -74,7 +74,7 @@ public class WalkState : States<TroopController>
 
             if (targetHealth != null && !targetHealth.IsDead)
             {
-                _controller.Mover.MoveTo(targetHealth.transform.position);
+                _controller.Mover.MoveTo(ChasePoint(targetHealth.transform));
                 _controller.SetMovementSpeed(_controller.Stats.movementSpeed);
             }
             else MoveToWaypoint();
@@ -111,7 +111,7 @@ public class WalkState : States<TroopController>
 
                 if (_controller.Mover != null)
                 {
-                    _controller.Mover.MoveTo(closest.transform.position);
+                    _controller.Mover.MoveTo(ChasePoint(closest.transform));
                     _controller.SetMovementSpeed(_controller.Stats.movementSpeed);
                 }
 
@@ -270,7 +270,15 @@ public class WalkState : States<TroopController>
     private bool InAttackRange(Transform t)
     {
         // Hasta el borde del objetivo, no hasta su centro.
-        return AttackState.DistanceToTarget(_controller.transform.position, t) <= _controller.Stats.attackRange;
+        if (AttackState.DistanceToTarget(_controller.transform.position, t) > _controller.Stats.attackRange) return false;
+
+        // Alturas: solo se ataca a quien está en la misma altura. Los arqueros (sin AttackState) las ignoran.
+        return _controller.AttackState == null || _controller.AttackState.HeightOk(t);
+    }
+
+    private Vector3 ChasePoint(Transform t)
+    {
+        return _controller.AttackState != null ? _controller.AttackState.ChasePoint(t) : t.position;
     }
 
     // Solo TROPAS enemigas: la torre se trata aparte para que las tropas tengan prioridad.
