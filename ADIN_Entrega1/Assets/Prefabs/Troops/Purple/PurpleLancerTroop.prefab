@@ -403,7 +403,7 @@ MonoBehaviour:
   useEightDirections: 1
   mirrorLeftWithSpriteFlip: 0
   verticalBias: 1.2
-  directionHysteresis: 20
+  directionHysteresis: 4
   directionXParam: DirectionX
   directionYParam: DirectionY
   debugCooldown: 1

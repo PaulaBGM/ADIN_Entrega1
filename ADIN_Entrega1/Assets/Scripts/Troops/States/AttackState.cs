@@ -281,7 +281,7 @@ public class AttackState : States<TroopController>, ITroopAttack
             float currentAngle = Mathf.Atan2(currentAttackDirection.y, currentAttackDirection.x) * Mathf.Rad2Deg;
             float halfSector = useEightDirections ? 22.5f : 45f;
 
-            if (Mathf.Abs(Mathf.DeltaAngle(angle, currentAngle)) <= halfSector + Mathf.Max(0f, directionHysteresis))
+            if (Mathf.Abs(Mathf.DeltaAngle(angle, currentAngle)) <= halfSector + Mathf.Clamp(directionHysteresis, 0f, 4f))
             {
                 if (debugCooldown)
                     Debug.Log($"[{_controller.name}] DEBUG: ángulo al objetivo = {angle:F1}º → se mantiene {currentAttackDirection}", _controller);
@@ -375,6 +375,12 @@ public class AttackState : States<TroopController>, ITroopAttack
         foreach (Collider2D c in colliders)
         {
             if (c.enabled && !c.isTrigger && !IsWeaponCollider(c))
+                return c.bounds.center;
+        }
+        // Las tropas solo tienen colliders trigger: se usa la cápsula del cuerpo (no armas) en vez de los pies.
+        foreach (Collider2D c in colliders)
+        {
+            if (c.enabled && !IsWeaponCollider(c))
                 return c.bounds.center;
         }
         return t.position;
