@@ -29,6 +29,14 @@ public class HealState : States<TroopController>
              "dejad 'isHealing' y usará la de curar (con sus eventos ApplyHeal / FinishHeal).")]
     [SerializeField] private string attackAnimParam = "isHealing";
 
+    [Header("Temporización del ataque (no depende de Animation Events)")]
+    [Tooltip("Los clips de ataque del monje no traen eventos ApplyHeal/FinishHeal, así que el golpe se aplica por tiempo.")]
+    [SerializeField] private string attackClipKeyword = "Attack";
+    [Tooltip("Momento del clip (0-1) en que cae el golpe.")]
+    [SerializeField, Range(0.05f, 1f)] private float attackImpactNormalized = 0.4f;
+    [Tooltip("Duración del ataque si no se encuentra el clip.")]
+    [SerializeField] private float attackFallbackDuration = 1.1f;
+
     [Header("Seguridad")]
     [Tooltip("Tiempo máximo de la animación si FinishHeal no llega. Ponedlo algo por encima de la duración del clip.")]
     [SerializeField] private float actionMaxDuration = 2f;
@@ -41,6 +49,7 @@ public class HealState : States<TroopController>
     private float nextHeal;    // Cooldown de curar (no se reinicia al salir del estado)
     private float nextAttack;  // Cooldown de atacar
     private float actionEndTime;
+    private float attackImpactTime;
 
     private MonkAction currentAction = MonkAction.None; // Acción con la animación en curso
     private string currentAnimParam;                    // Parámetro del Animator usado por esa acción
@@ -101,8 +110,18 @@ public class HealState : States<TroopController>
         // Durante la animación solo se vigila el timeout.
         if (currentAction != MonkAction.None)
         {
+            // Ataque: el golpe cae por tiempo, sin esperar a un evento que el clip no tiene.
+            if (currentAction == MonkAction.Attack && !effectApplied && Time.time >= attackImpactTime)
+                HandleEffectApplied();
+
             if (Time.time >= actionEndTime)
             {
+                if (currentAction == MonkAction.Attack)
+                {
+                    HandleActionFinished();   // el ataque dura lo que el clip: un golpe por animación
+                    return;
+                }
+
                 Debug.LogWarning($"[{_controller.name}] FinishHeal no ha llegado; se cierra la acción por timeout.", _controller);
                 HandleActionFinished();
             }
@@ -184,6 +203,13 @@ public class HealState : States<TroopController>
         effectApplied = false;
         actionEndTime = Time.time + Mathf.Max(0.1f, actionMaxDuration);
 
+        if (action == MonkAction.Attack)
+        {
+            float length = AttackClipLength();
+            attackImpactTime = Time.time + length * attackImpactNormalized;
+            actionEndTime = Time.time + length;
+        }
+
         // El cooldown empieza al iniciar la animación.
         if (action == MonkAction.Heal)
             nextHeal = Time.time + Mathf.Max(0f, _controller.Stats.healingCooldown);
@@ -204,6 +230,19 @@ public class HealState : States<TroopController>
 
         if (debugLogs)
             Debug.Log($"[{_controller.name}] Empieza a {(action == MonkAction.Heal ? "curar" : "atacar")} a {target.name} (parámetro '{currentAnimParam}').", _controller);
+    }
+
+    // Duración del clip de ataque del Animator (se busca por nombre).
+    private float AttackClipLength()
+    {
+        if (animator != null && animator.runtimeAnimatorController != null)
+        {
+            foreach (AnimationClip clip in animator.runtimeAnimatorController.animationClips)
+                if (clip != null && clip.name.Contains(attackClipKeyword) && clip.length > 0.05f)
+                    return clip.length;
+        }
+
+        return Mathf.Max(0.1f, attackFallbackDuration);
     }
 
     private bool HasAnimParam(string param)
