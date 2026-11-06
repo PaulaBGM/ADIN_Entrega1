@@ -12,13 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 049f756ca07f1f546a72400872f66216, type: 3}
   m_Name: MonkTroopSO
   m_EditorClassIdentifier: 
-  maxHealth: 88
-  defense: 12
+  maxHealth: 56
+  defense: 9
   movementSpeed: 3
   huntEnemiesAnywhere: 1
   huntRange: 200
   detectionRange: 14.5
-  attackDamage: 10.5
+  attackDamage: 14
   attackRange: 5
   attackCooldown: 1
   healingPower: 20

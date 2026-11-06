@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: LancerTroopSO
   m_EditorClassIdentifier: 
   maxHealth: 72
-  defense: 19
+  defense: 16
   movementSpeed: 1
   huntEnemiesAnywhere: 1
   huntRange: 200
   detectionRange: 2.5
-  attackDamage: 28
+  attackDamage: 30
   attackRange: 2.5
   attackCooldown: 0.5
   healingPower: 0
