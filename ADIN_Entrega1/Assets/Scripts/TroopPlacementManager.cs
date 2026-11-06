@@ -27,6 +27,13 @@ public enum PlacementKey
 /// </summary>
 public class TroopPlacementManager : MonoBehaviour
 {
+    [Header("Combate")]
+    [SerializeField, Tooltip("Desmárcalo para desactivar los ataques de TODAS las tropas. Cada tropa también tiene su propio 'Attacks Enabled'.")]
+    private bool attacksEnabled = true;
+
+    [SerializeField, Tooltip("Desmárcalo para que recibir daño NO interrumpa los ataques de ninguna tropa. Cada tropa también tiene su propio 'Attacks Interruptible'.")]
+    private bool attacksInterruptible = true;
+
     private const int CellPixels = 8; // Píxeles por celda en la textura de la rejilla
     private const int BaseSize = 2;   // La base (torre) ocupa BaseSize x BaseSize celdas (2x2 = 4 celdas)
 
@@ -248,6 +255,9 @@ public class TroopPlacementManager : MonoBehaviour
 
     private void Update()
     {
+        TroopController.GlobalAttacksEnabled = attacksEnabled;
+        TroopController.GlobalAttacksInterruptible = attacksInterruptible;
+
         if (terrain == null || cam == null || !terrain.IsReady) return;
         if (!initialized) Initialize();
 

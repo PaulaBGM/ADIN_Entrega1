@@ -8,6 +8,26 @@ namespace FSM.Enemy
     {
         [SerializeField] private float timeToDestroy = 2f;
 
+        [Header("Combate")]
+        [SerializeField, Tooltip("Si se desmarca, esta tropa no ataca (sigue caminando hacia el waypoint).")]
+        private bool attacksEnabled = true;
+
+        /// <summary>Interruptor global (lo controla TroopPlacementManager). Si es false, ninguna tropa ataca.</summary>
+        public static bool GlobalAttacksEnabled = true;
+
+        public bool AttacksEnabled => attacksEnabled && GlobalAttacksEnabled;
+
+        [SerializeField, Tooltip("Si se desmarca, recibir daño NO interrumpe el ataque en curso (no hay animación de hurt mientras ataca).")]
+        private bool attacksInterruptible = true;
+
+        /// <summary>Interruptor global (lo controla TroopPlacementManager). Si es false, ningún ataque se interrumpe.</summary>
+        public static bool GlobalAttacksInterruptible = true;
+
+        public bool AttacksInterruptible => attacksInterruptible && GlobalAttacksInterruptible;
+
+        private bool IsMidAttack =>
+            (AttackState != null && AttackState.IsAttackInProgress) || CurrentState is ShootAttackState;
+
         [Header("Hurt")]
         [SerializeField, Tooltip("Parte del nombre del clip de hurt (p. ej. 'Hitted'). Sirve para detectar cuándo acaba sin depender de un evento de animación.")]
         private string hurtClipKeyword = "Hitted";
@@ -183,6 +203,9 @@ namespace FSM.Enemy
         public void PlayHitAnimation()
         {
             if (_healthSystem != null && _healthSystem.IsDead) return;
+
+            // Ataques no interrumpibles: el daño se recibe igual, pero sin animación de hurt ni cortar el golpe.
+            if (!AttacksInterruptible && IsMidAttack) return;
 
             IsHurt = true;
             HurtStarted?.Invoke();

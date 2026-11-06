@@ -32,6 +32,12 @@ public class ShootAttackState : States<TroopController>, ITroopAttack
         if (_controller.Stats == null)
             return;
 
+        if (!_controller.AttacksEnabled)
+        {
+            ReturnToIdle();
+            return;
+        }
+
         Transform target = _controller.Target;
 
         if (target == null)

@@ -330,7 +330,7 @@ public class HealState : States<TroopController>
         }
 
         bool onlySupportLeft = TroopController.OnlyRangedAndHealersLeft();
-        bool shouldAttack = canAttack && (!attackOnlyWhenNoAllies || !HasLivingAllyTroops() || onlySupportLeft);
+        bool shouldAttack = canAttack && _controller.AttacksEnabled && (!attackOnlyWhenNoAllies || !HasLivingAllyTroops() || onlySupportLeft);
 
         if (shouldAttack != attackMode)
         {

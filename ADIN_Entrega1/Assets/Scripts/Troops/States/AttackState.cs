@@ -86,6 +86,12 @@ public class AttackState : States<TroopController>, ITroopAttack
     {
         if (_controller.Stats == null || _controller.IsHurt) return;
 
+        if (!_controller.AttacksEnabled)
+        {
+            ExitAttackState();
+            return;
+        }
+
         if (!TryGetValidTarget(out Transform target))
         {
             ExitAttackState();

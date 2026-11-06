@@ -25,7 +25,7 @@ public class RangedIdleState : States<TroopController>
 
     public override void OnUpdate()
     {
-        if (_controller.Stats == null)
+        if (_controller.Stats == null || !_controller.AttacksEnabled)
             return;
 
         if (Time.time < nextCheck)

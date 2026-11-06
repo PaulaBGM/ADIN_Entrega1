@@ -84,6 +84,22 @@ public class WalkState : States<TroopController>
             else MoveToWaypoint();
         }
 
+        // Ataques desactivados: solo camina hacia el waypoint, sin buscar ni perseguir enemigos ni torres.
+        if (!_controller.AttacksEnabled)
+        {
+            targetHealth = null;
+            if (_controller.Mover != null && !_controller.Mover.IsMoving)
+            {
+                _controller.SetMovementSpeed(0f);
+                if (Time.time >= nextCheck)
+                {
+                    nextCheck = Time.time + 0.5f;
+                    MoveToWaypoint();   // por si se reactivan o aún no había llegado
+                }
+            }
+            return;
+        }
+
         // 1. Tropa enemiga ya detectada: en cuanto entra en rango de ataque, se para y ataca (cada frame).
         if (targetHealth != null)
         {
@@ -185,6 +201,7 @@ public class WalkState : States<TroopController>
 
     private bool CanAttack()
     {
+        if (!_controller.AttacksEnabled) return false;
         return _controller.AttackState != null || _controller.ShootAttackState != null;
     }
 
