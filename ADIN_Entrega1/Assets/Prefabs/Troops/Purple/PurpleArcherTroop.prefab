@@ -46,6 +46,7 @@ GameObject:
   - component: {fileID: 8866351688308967337}
   - component: {fileID: 8367090485006472611}
   - component: {fileID: 2807447823629062880}
+  - component: {fileID: 7630063222670455749}
   m_Layer: 6
   m_Name: PurpleArcherTroop
   m_TagString: Untagged
@@ -91,6 +92,14 @@ MonoBehaviour:
   particleSpawnPoint: {fileID: 5631076662010434257}
   knockbackDistance: 0.15
   knockbackDuration: 0.1
+  audioSource: {fileID: 0}
+  getHittedSfx:
+  - {fileID: 8300000, guid: d973c1c79c6c6574b84b1c4d102ac429, type: 3}
+  - {fileID: 8300000, guid: af40bff4a677f9948b2cf220fb477838, type: 3}
+  getHealedSfx: {fileID: 8300000, guid: 7379eafef7164c14db57c7f106c99735, type: 3}
+  damageSoundCooldown: 0.4
+  healSoundCooldown: 0.6
+  hideDelayWhenDestroyed: 0.8
 --- !u!114 &2894691459134621855
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -126,8 +135,6 @@ MonoBehaviour:
   speed: 2
   nodeTolerance: 0.03
   flipSpriteByDirection: 1
-  mirrorWithScale: 1
-  artFacesLeft: 1
   bodySprite: {fileID: 679042691254095148}
   initialFacing: 2
 --- !u!114 &8866351688308967337
@@ -145,6 +152,8 @@ MonoBehaviour:
   arrowPrefab: {fileID: 4577546318453322080, guid: 909d80cf8e3834242a464c623c09a530, type: 3}
   firePoint: {fileID: 1716255719983321157}
   arrowSpeed: 10
+  structureRangeBonus: 0.25
+  repathInterval: 0.4
 --- !u!114 &8367090485006472611
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -177,8 +186,111 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 8
   checkInterval: 0.25
+  huntAllEnemiesBeforeTower: 1
+  towerLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  debugTower: 1
+  maxTowerDistanceFromWaypoint: 4
   spriteInterval: 0.4
   spriteSpawnPoint: {fileID: 7355094088016038353}
+--- !u!82 &7630063222670455749
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 587882833733114387}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: -3833911137781105875, guid: 364826c0aab3d414d80c2e6444a6d75a, type: 2}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 0
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1 &1183518355127544053
 GameObject:
   m_ObjectHideFlags: 0

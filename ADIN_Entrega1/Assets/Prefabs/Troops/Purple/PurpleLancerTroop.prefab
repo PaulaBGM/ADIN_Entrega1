@@ -259,6 +259,7 @@ GameObject:
   - component: {fileID: 4956658979668775876}
   - component: {fileID: 5388724382176775005}
   - component: {fileID: 3953068228211858602}
+  - component: {fileID: 516614542042386924}
   m_Layer: 6
   m_Name: PurpleLancerTroop
   m_TagString: Untagged
@@ -303,6 +304,14 @@ MonoBehaviour:
   particleSpawnPoint: {fileID: 669758395329830049}
   knockbackDistance: 0.15
   knockbackDuration: 0.1
+  audioSource: {fileID: 0}
+  getHittedSfx:
+  - {fileID: 8300000, guid: af40bff4a677f9948b2cf220fb477838, type: 3}
+  - {fileID: 8300000, guid: d973c1c79c6c6574b84b1c4d102ac429, type: 3}
+  getHealedSfx: {fileID: 8300000, guid: 7379eafef7164c14db57c7f106c99735, type: 3}
+  damageSoundCooldown: 0.4
+  healSoundCooldown: 0.6
+  hideDelayWhenDestroyed: 0.8
 --- !u!114 &7629761998984201075
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -350,10 +359,12 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 8
   checkInterval: 0.25
+  huntAllEnemiesBeforeTower: 1
   towerLayer:
     serializedVersion: 2
     m_Bits: 0
   debugTower: 1
+  maxTowerDistanceFromWaypoint: 4
   spriteInterval: 0.4
   spriteSpawnPoint: {fileID: 669758395329830049}
 --- !u!114 &4956658979668775876
@@ -398,6 +409,9 @@ MonoBehaviour:
   debugCooldown: 1
   debugInterval: 0.25
   structureRepathInterval: 0.4
+  structureRangeBonus: 0.25
+  useHeights: 1
+  maxHeightDifference: 0
 --- !u!50 &3953068228211858602
 Rigidbody2D:
   serializedVersion: 5
@@ -425,6 +439,103 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 4
+--- !u!82 &516614542042386924
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3541513215254811848}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: -3833911137781105875, guid: 364826c0aab3d414d80c2e6444a6d75a, type: 2}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 0
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1 &5205894744298190488
 GameObject:
   m_ObjectHideFlags: 0

@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 using FSM.Enemy;
+using Random = System.Random;
 
 public class HealthSystem : MonoBehaviour
 {
@@ -19,6 +20,19 @@ public class HealthSystem : MonoBehaviour
     [Header("Damage Knockback")]
     [SerializeField] private float knockbackDistance = 0.15f;
     [SerializeField] private float knockbackDuration = 0.1f;
+
+    [Header("Audio Effects")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip[] getHittedSfx;
+    [SerializeField] private AudioClip getHealedSfx;
+
+    [Header("Audio Cooldown")]
+    [SerializeField] private float damageSoundCooldown = 0.4f;
+    [SerializeField] private float healSoundCooldown = 0.6f;
+
+    private float lastDamageSoundTime = -Mathf.Infinity;
+    private float lastHealSoundTime = -Mathf.Infinity;
+    private int lastDamageClipIndex = -1;
 
     private Coroutine knockbackCoroutine;
 
@@ -44,6 +58,9 @@ public class HealthSystem : MonoBehaviour
 
     private void Awake()
     {
+        if (audioSource == null)
+            audioSource = GetComponent<AudioSource>();
+        
         troopController = GetComponentInParent<TroopController>();
 
         if (troopController != null && troopController.Stats != null)
@@ -69,6 +86,7 @@ public class HealthSystem : MonoBehaviour
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
 
         SpawnParticles(damageParticlesPrefab);
+        PlayDamageSound();
         PlayKnockback();
 
         if (currentHealth <= 0f)
@@ -97,6 +115,7 @@ public class HealthSystem : MonoBehaviour
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
 
         SpawnParticles(healParticlesPrefab);
+        PlayHealSound();
 
         Debug.Log($"[HEAL] {name} ha recuperado {healedAmount} de vida.");
     }
@@ -107,12 +126,12 @@ public class HealthSystem : MonoBehaviour
         if (prefab == null)
             return;
 
-        if (MovementSpritePool.Instance == null)
+        if (VFXPool.Instance == null)
             return;
 
         Vector3 spawnPosition = particleSpawnPoint != null ? particleSpawnPoint.position : transform.position;
 
-        MovementSpritePool.Instance.Spawn(prefab, spawnPosition, Quaternion.identity);
+        VFXPool.Instance.Spawn(prefab, spawnPosition, Quaternion.identity);
     }
 
 
@@ -191,4 +210,51 @@ public class HealthSystem : MonoBehaviour
 
     public float GetCurrentHealth() => currentHealth;
     public float GetMaxHealth() => maxHealth;
+    
+    private void PlayDamageSound()
+    {
+        if (audioSource == null || getHittedSfx == null || getHittedSfx.Length == 0)
+            return;
+
+        if (Time.time - lastDamageSoundTime < damageSoundCooldown)
+            return;
+
+        int randomIndex;
+
+        if (getHittedSfx.Length == 1)
+        {
+            randomIndex = 0;
+        }
+        else
+        {
+            do
+            {
+                randomIndex = UnityEngine.Random.Range(0, getHittedSfx.Length);
+                
+            }
+            while (randomIndex == lastDamageClipIndex);
+        }
+
+        AudioClip selectedClip = getHittedSfx[randomIndex];
+
+        if (selectedClip == null)
+            return;
+
+        audioSource.PlayOneShot(selectedClip);
+
+        lastDamageClipIndex = randomIndex;
+        lastDamageSoundTime = Time.time;
+    }
+
+    private void PlayHealSound()
+    {
+        if (audioSource == null || getHealedSfx == null)
+            return;
+
+        if (Time.time - lastHealSoundTime < healSoundCooldown)
+            return;
+
+        audioSource.PlayOneShot(getHealedSfx);
+        lastHealSoundTime = Time.time;
+    }
 }

@@ -32,6 +32,7 @@ namespace FSM.Enemy
         public Transform Target { get; set; }
 
         public TroopStats Stats => stats;
+        public AudioSource AudioSource { get; private set; }
         public Animator Animator { get; private set; }
         public TroopPathMover Mover { get; private set; }
         public HealState HealState { get; private set; }
@@ -63,6 +64,7 @@ namespace FSM.Enemy
 
             Mover = GetComponent<TroopPathMover>();
             Animator = GetComponentInChildren<Animator>();
+            AudioSource =  GetComponent<AudioSource>();
 
             // Debug de tiempos de combate: se añade solo para no tener que tocar los prefabs.
             if (GetComponent<TroopCombatTimer>() == null) gameObject.AddComponent<TroopCombatTimer>();

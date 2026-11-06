@@ -14,7 +14,8 @@ public class ShootAttackState : States<TroopController>, ITroopAttack
 
     private float nextAttackTime;
     private float nextRepath;
-
+    private int lastShootClipIndex = -1;
+    
     public override void OnEnter()
     {
         nextAttackTime = 0f;
@@ -107,6 +108,8 @@ public class ShootAttackState : States<TroopController>, ITroopAttack
 
         if (direction.sqrMagnitude == 0f)
             return;
+        
+        PlayShootSound();
 
         ArrowPool.Instance.Spawn(origin, direction, arrowSpeed, _controller.Stats.attackDamage, _controller.gameObject, target);
     }
@@ -122,6 +125,41 @@ public class ShootAttackState : States<TroopController>, ITroopAttack
             _controller.SetState(_controller.IdleState);
     }
 
+    private void PlayShootSound()
+    {
+        if (_controller.AudioSource == null || _controller.Stats == null)
+            return;
+
+        AudioClip[] clips = _controller.Stats.attackSfx;
+
+        if (clips == null || clips.Length == 0)
+            return;
+
+        // Crear una lista de índices de clips que no sean null.
+        System.Collections.Generic.List<int> validIndexes = new();
+
+        for (int i = 0; i < clips.Length; i++)
+        {
+            if (clips[i] != null)
+                validIndexes.Add(i);
+        }
+
+        if (validIndexes.Count == 0)
+            return;
+
+        // Evitar repetir el último sonido si hay más de uno disponible.
+        if (validIndexes.Count > 1)
+            validIndexes.Remove(lastShootClipIndex);
+
+        int randomIndex = validIndexes[
+            UnityEngine.Random.Range(0, validIndexes.Count)
+        ];
+
+        _controller.AudioSource.PlayOneShot(clips[randomIndex]);
+
+        lastShootClipIndex = randomIndex;
+    }
+    
     public override void OnExit()
     {
         _controller.SetAttacking(false);

@@ -24,3 +24,7 @@ MonoBehaviour:
   healingPower: 20
   healingRange: 2.5
   healingCooldown: 2
+  attackSfx:
+  - {fileID: 8300000, guid: b6d1340a873f9974abbeeeb45d880d24, type: 3}
+  - {fileID: 8300000, guid: 1760b26b91944f447ad5420e15c396f2, type: 3}
+  getHitSfx: {fileID: 8300000, guid: af40bff4a677f9948b2cf220fb477838, type: 3}

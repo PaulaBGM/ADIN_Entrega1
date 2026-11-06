@@ -333,7 +333,7 @@ public class WalkState : States<TroopController>
 
     private void UpdateMovementSprites()
     {
-        if (MovementSpritePool.Instance == null)
+        if (VFXPool.Instance == null)
         {
             return;
         }
@@ -345,7 +345,7 @@ public class WalkState : States<TroopController>
 
         Vector3 spawnPosition = spriteSpawnPoint != null ? spriteSpawnPoint.position : _controller.transform.position;
 
-        MovementSpritePool.Instance.Spawn(spawnPosition);
+        VFXPool.Instance.Spawn(spawnPosition);
     }
 
     private void OnDrawGizmosSelected()

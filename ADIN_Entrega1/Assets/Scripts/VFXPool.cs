@@ -3,9 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MovementSpritePool : MonoBehaviour
+public class VFXPool : MonoBehaviour
 {
-    public static MovementSpritePool Instance { get; private set; }
+    public static VFXPool Instance { get; private set; }
 
     [System.Serializable]
     public class PoolEntry
@@ -28,11 +28,14 @@ public class MovementSpritePool : MonoBehaviour
     private readonly Dictionary<GameObject, GameObject> prefabByInstance = new();
     private readonly Dictionary<GameObject, float> lifetimeByPrefab = new();
 
+    // Controla las coroutines de devolución de cada instancia.
+    private readonly Dictionary<GameObject, Coroutine> returnCoroutines = new();
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
         {
-            Debug.LogWarning("Ya existe un MovementSpritePool en la escena.", this);
+            Debug.LogWarning("Ya existe un VFXPool en la escena.", this);
             Destroy(gameObject);
             return;
         }
@@ -65,6 +68,7 @@ public class MovementSpritePool : MonoBehaviour
     private GameObject CreateInstance(GameObject prefab)
     {
         GameObject instance = Instantiate(prefab, transform);
+
         instance.SetActive(false);
 
         prefabByInstance[instance] = prefab;
@@ -100,13 +104,29 @@ public class MovementSpritePool : MonoBehaviour
         }
         else
         {
+            Debug.LogWarning($"[VFXPool] No quedan instancias disponibles para {prefab.name}.", this);
             return;
         }
 
+        // Cancelar cualquier devolución anterior de esta instancia.
+        if (returnCoroutines.TryGetValue(instance, out Coroutine previousCoroutine))
+        {
+            if (previousCoroutine != null)
+                StopCoroutine(previousCoroutine);
+
+            returnCoroutines.Remove(instance);
+        }
+
+        // Primero posicionar y después activar.
         instance.transform.SetPositionAndRotation(position, rotation);
         instance.SetActive(true);
 
-        StartCoroutine(ReturnToPool(instance, lifetimeByPrefab[prefab]));
+        // Iniciar su devolución al pool.
+        Coroutine coroutine = StartCoroutine(
+            ReturnToPool(instance, lifetimeByPrefab[prefab])
+        );
+
+        returnCoroutines[instance] = coroutine;
     }
 
     private IEnumerator ReturnToPool(GameObject instance, float lifetime)
@@ -118,7 +138,10 @@ public class MovementSpritePool : MonoBehaviour
 
         instance.SetActive(false);
 
-        if (prefabByInstance.TryGetValue(instance, out GameObject prefab) && pools.TryGetValue(prefab, out Queue<GameObject> pool))
+        returnCoroutines.Remove(instance);
+
+        if (prefabByInstance.TryGetValue(instance, out GameObject prefab) &&
+            pools.TryGetValue(prefab, out Queue<GameObject> pool))
         {
             pool.Enqueue(instance);
         }

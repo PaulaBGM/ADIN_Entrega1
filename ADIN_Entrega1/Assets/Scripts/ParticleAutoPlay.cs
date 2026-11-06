@@ -11,12 +11,12 @@ public class ParticleAutoPlay : MonoBehaviour
 
     private void OnEnable()
     {
-        if (systems == null)
+        if (systems == null || systems.Length == 0)
             systems = GetComponentsInChildren<ParticleSystem>(true);
 
         foreach (ParticleSystem ps in systems)
         {
-            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            ps.Clear(true);
             ps.Play(true);
         }
     }

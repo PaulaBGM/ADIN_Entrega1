@@ -25,4 +25,7 @@ public class TroopStats : ScriptableObject
     [Min(0f)] public float healingPower = 0f;
     [Min(0f)] public float healingRange = 3f;
     [Min(0.01f)] public float healingCooldown = 2f;
+
+    public AudioClip[] attackSfx;
+    public AudioClip getHitSfx;
 }
