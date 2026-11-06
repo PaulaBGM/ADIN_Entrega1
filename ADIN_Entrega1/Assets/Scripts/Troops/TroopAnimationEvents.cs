@@ -196,9 +196,7 @@ public class TroopAnimationEvents : MonoBehaviour
             Debug.LogError($"[{name}] No se puede terminar Hurt: falta TroopController.", this);
             return;
         }
-
-        Debug.Log($"[{troopController.name}] Animation Event FinishHitAnimation ejecutado.", troopController);
-
+        
         troopController.FinishHitAnimation();
         HitFinished?.Invoke();
     }

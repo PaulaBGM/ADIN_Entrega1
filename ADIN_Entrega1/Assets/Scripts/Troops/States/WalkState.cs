@@ -231,10 +231,7 @@ public class WalkState : States<TroopController>
             foreach (HealthSystem h in FindObjectsByType<HealthSystem>(FindObjectsSortMode.None))
                 ConsiderTower(h, ownHealth, reference, maxTowerDistanceFromWaypoint, ref best, ref bestDistance);
         }
-
-        if (best != null && debugTower)
-            Debug.Log($"[{_controller.name}] Torre enemiga: {best.name}.", _controller);
-
+        
         return best;
     }
 

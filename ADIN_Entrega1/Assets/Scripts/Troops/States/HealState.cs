@@ -227,9 +227,6 @@ public class HealState : States<TroopController>
         }
 
         SetAnim(currentAnimParam, true);
-
-        if (debugLogs)
-            Debug.Log($"[{_controller.name}] Empieza a {(action == MonkAction.Heal ? "curar" : "atacar")} a {target.name} (parámetro '{currentAnimParam}').", _controller);
     }
 
     // Duración del clip de ataque del Animator (se busca por nombre).
@@ -338,10 +335,6 @@ public class HealState : States<TroopController>
         if (shouldAttack != attackMode)
         {
             attackMode = shouldAttack;
-            if (debugLogs)
-                Debug.Log(attackMode
-                    ? $"[{_controller.name}] No quedan tropas aliadas: pasa a MODO ATAQUE."
-                    : $"[{_controller.name}] Vuelve a modo curación.", _controller);
         }
 
         if (attackMode)

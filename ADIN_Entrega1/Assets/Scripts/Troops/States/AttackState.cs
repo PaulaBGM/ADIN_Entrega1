@@ -146,7 +146,6 @@ public class AttackState : States<TroopController>, ITroopAttack
         {
             if (debugCooldown && Time.time >= nextCooldownDebugTime)
             {
-                Debug.Log($"[{_controller.name}] DEBUG: cooldown restante = {nextAttackTime - Time.time:F2} s", _controller);
                 nextCooldownDebugTime = Time.time + Mathf.Max(0.05f, debugInterval);
             }
             return;
@@ -165,7 +164,6 @@ public class AttackState : States<TroopController>, ITroopAttack
         // El ataque interrumpido no tiene que esperar el cooldown anterior.
         nextAttackTime = Time.time;
         attackFinishTime = 0f;
-        if (debugCooldown) Debug.Log($"[{_controller.name}] DEBUG: terminó Hurt; puede volver a atacar.", _controller);
     }
 
     private bool TryGetValidTarget(out Transform target)
@@ -475,8 +473,6 @@ public class AttackState : States<TroopController>, ITroopAttack
         ApplyDirectionToAnimator(currentAttackDirection);
 
         float cooldown = StartCooldown();
-
-        if (debugCooldown) Debug.Log($"[{_controller.name}] DEBUG: ataque terminado; cooldown = {cooldown:F2} s.", _controller);
     }
 
     private float StartCooldown()

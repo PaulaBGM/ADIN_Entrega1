@@ -236,8 +236,6 @@ namespace FSM.Enemy
 
             IsHurt = false;
             HurtFinished?.Invoke();
-
-            Debug.Log($"[{name}] Hurt finalizado; IsHurt = false.", this);
         }
 
         public void NotifyAttackAnimationFinished()

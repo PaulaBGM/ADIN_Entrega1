@@ -208,8 +208,8 @@ CapsuleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
-  m_Size: {x: 1.01, y: 1.34}
+  m_Offset: {x: 0, y: 0.25}
+  m_Size: {x: 1.78, y: 1.34}
   m_Direction: 0
 --- !u!114 &4679604413726461602
 MonoBehaviour:
@@ -367,6 +367,9 @@ MonoBehaviour:
   allyCheckRadius: 100
   healAnimParam: isHealing
   attackAnimParam: isAttacking
+  attackClipKeyword: Attack
+  attackImpactNormalized: 0.4
+  attackFallbackDuration: 1.1
   actionMaxDuration: 2
   debugLogs: 1
 --- !u!82 &7624667581688122862

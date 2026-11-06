@@ -552,7 +552,6 @@ public class TroopPlacementManager : MonoBehaviour
         players[player1OnLeft ? 0 : 1].baseTransform = left.transform;
         players[player1OnLeft ? 1 : 0].baseTransform = right.transform;
 
-        Debug.Log($"[TroopPlacementManager] Torres de la escena asignadas: {players[0].name} -> {players[0].baseTransform.name}, {players[1].name} -> {players[1].baseTransform.name}.");
     }
 
     private void MoveBase(int player, Vector2Int cell)
