@@ -802,7 +802,7 @@ public class TroopPlacementManager : MonoBehaviour
     private void OnGUI()
     {
         Matrix4x4 previousMatrix = GUI.matrix;
-        uiScale = Mathf.Max(0.5f, Screen.height / 1080f); // Legible también en pantallas 4K
+        uiScale = Mathf.Max(0.5f, Screen.height / 1080f);
         GUI.matrix = Matrix4x4.Scale(new Vector3(uiScale, uiScale, 1f));
 
         bool placing = phase == Phase.Placement;
