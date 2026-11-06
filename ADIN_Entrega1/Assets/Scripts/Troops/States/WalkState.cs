@@ -27,6 +27,7 @@ public class WalkState : States<TroopController>
     private bool resumeAfterHurt;
     private HealthSystem targetHealth;   // Tropa enemiga detectada (se comprueba su distancia cada frame)
     private HealthSystem enemyTower;     // Torre enemiga (se busca una vez y se cachea)
+    private bool enemyTroopsRemain;      // Queda alguna tropa enemiga viva en el mapa
 
     private float nextParticleTime;
 
@@ -36,6 +37,7 @@ public class WalkState : States<TroopController>
         nextCheck = 0f;
         resumeAfterHurt = false;
         targetHealth = null;
+        enemyTroopsRemain = true;   // hasta la primera búsqueda, se asume que quedan
 
         if (_controller.Stats == null)
         {
@@ -104,6 +106,8 @@ public class WalkState : States<TroopController>
             if (closest == null && huntAllEnemiesBeforeTower)
                 closest = FindClosestEnemy(10000f);
 
+            enemyTroopsRemain = closest != null;
+
             if (closest != null)
             {
                 targetHealth = closest;
@@ -133,7 +137,7 @@ public class WalkState : States<TroopController>
 
             // 2b. Sin tropas enemigas cerca y la torre enemiga dentro del radio de detección: a por ella.
             HealthSystem tower = GetEnemyTower();
-            if (tower != null && CanAttack() &&
+            if (tower != null && CanAttack() && !(huntAllEnemiesBeforeTower && enemyTroopsRemain) &&
                 AttackState.DistanceToTarget(_controller.transform.position, tower.transform) <= _controller.Stats.detectionRange)
             {
                 AttackTower(tower);
@@ -142,7 +146,9 @@ public class WalkState : States<TroopController>
         }
 
         // 3. Ha llegado al waypoint (base enemiga): atacar la TORRE, no el waypoint (que no tiene vida).
-        if (_controller.Waypoint != null && !_controller.Mover.IsMoving)
+        // Solo si NO queda ninguna tropa enemiga: si el camino hasta una tropa termina (punto inalcanzable, altura distinta...)
+        // y la tropa sigue viva, no se va a por la torre; se reintenta la persecución en la siguiente comprobación.
+        if (_controller.Waypoint != null && !_controller.Mover.IsMoving && !(huntAllEnemiesBeforeTower && enemyTroopsRemain))
         {
             HealthSystem tower = GetEnemyTower();
 

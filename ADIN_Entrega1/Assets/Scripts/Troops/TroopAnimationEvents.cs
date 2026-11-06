@@ -19,6 +19,7 @@ public class TroopAnimationEvents : MonoBehaviour
 
     private bool hitDetectedThisSwing;
     private bool swingOpen;
+    private float hitboxLocalX;
     private ContactFilter2D filter;
     private readonly Collider2D[] results = new Collider2D[16];
 
@@ -39,6 +40,7 @@ public class TroopAnimationEvents : MonoBehaviour
         if (attackCollider != null)
         {
             attackCollider.enabled = false;
+            hitboxLocalX = Mathf.Abs(attackCollider.transform.localPosition.x);
             // Se asume que el tamaño original es el del golpe HORIZONTAL (más ancho que alto).
             baseHitboxSize = attackCollider.size;
         }
@@ -83,6 +85,7 @@ public class TroopAnimationEvents : MonoBehaviour
 
         hitDetectedThisSwing = false;
         swingOpen = true;
+        ApplyHitboxFacing();
         attackCollider.enabled = true;
 
         // Torres: el golpe cuenta si están a rango, aunque la hitbox no llegue a tocar su collider.
@@ -131,6 +134,33 @@ public class TroopAnimationEvents : MonoBehaviour
 
         troopController.AttackState.FinishAttackAnimation();
         AttackFinished?.Invoke();
+    }
+
+    // La tropa se gira solo con SpriteRenderer.flipX, que no mueve el hijo HitBox: sin esto, el arma del
+    // guerrero que mira a la izquierda (el morado) golpearía siempre en el lado derecho. Se coloca delante,
+    // mirando hacia donde mira la tropa. El lancero no entra: sus clips ya colocan la hitbox por dirección.
+    private void ApplyHitboxFacing()
+    {
+        if (attackCollider == null || troopController == null) return;
+
+        AttackState attack = troopController.AttackState;
+        if (attack == null || attack.UsesDirectionalAttack || troopController.Mover == null) return;
+
+        float sign = troopController.Mover.FacingLeft ? -1f : 1f;
+
+        Transform t = attackCollider.transform;
+        Vector3 lp = t.localPosition;
+        lp.x = hitboxLocalX * sign;
+        t.localPosition = lp;
+
+        Vector2 off = attackCollider.offset;
+        off.x = 0f;   // el offset X de los clips está pensado para un solo lado
+        attackCollider.offset = off;
+    }
+
+    private void LateUpdate()
+    {
+        if (swingOpen) ApplyHitboxFacing();   // después del Animator, que anima el offset del collider
     }
 
     private void FixedUpdate()

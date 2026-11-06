@@ -27,6 +27,7 @@ public class AttackState : States<TroopController>, ITroopAttack
     [SerializeField] private float debugInterval = 0.25f;
 
     private float nextAttackTime;
+    private float lastAttackStartTime = -999f;
     private float attackFinishTime;
     private float nextCooldownDebugTime;
     private HealthSystem targetHealth;
@@ -39,6 +40,9 @@ public class AttackState : States<TroopController>, ITroopAttack
     private Vector2 currentAttackDirection;
 
     public bool IsAttackInProgress => waitingForHit;
+
+    /// <summary>True si el ataque usa clips por dirección (lancero), que ya colocan su propia hitbox.</summary>
+    public bool UsesDirectionalAttack => useDirectionalAttackAnimation;
 
     /// <summary>True mientras este estado es el activo de la FSM.</summary>
     public bool IsActive { get; private set; }
@@ -161,8 +165,8 @@ public class AttackState : States<TroopController>, ITroopAttack
 
     private void HandleHurtFinished()
     {
-        // El ataque interrumpido no tiene que esperar el cooldown anterior.
-        nextAttackTime = Time.time;
+        // Recibir daño NO borra el cooldown: si se hiciera, una tropa golpeada a menudo atacaría sin esperar.
+        // Un ataque interrumpido sí cuenta como lanzado: el siguiente espera el cooldown desde su inicio.
         attackFinishTime = 0f;
     }
 
@@ -199,6 +203,7 @@ public class AttackState : States<TroopController>, ITroopAttack
 
         waitingForHit = true;
         damageAppliedThisAttack = false;
+        lastAttackStartTime = Time.time;
         attackFinishTime = Time.time + Mathf.Max(0.1f, animationFallbackTime);
 
         if (alternateAttackAnimations) useSecondAttack = !useSecondAttack;
@@ -226,6 +231,8 @@ public class AttackState : States<TroopController>, ITroopAttack
     public void InterruptAttackForHurt()
     {
         bool wasAttacking = waitingForHit;
+        if (wasAttacking)
+            nextAttackTime = Mathf.Max(nextAttackTime, lastAttackStartTime + Mathf.Max(0f, _controller.Stats != null ? _controller.Stats.attackCooldown : 0f));
         waitingForHit = false;
         damageAppliedThisAttack = false;
         attackFinishTime = 0f;
@@ -341,10 +348,18 @@ public class AttackState : States<TroopController>, ITroopAttack
         Collider2D[] colliders = t.GetComponentsInChildren<Collider2D>();
         foreach (Collider2D c in colliders)
         {
-            if (c.enabled && !c.isTrigger)
+            if (c.enabled && !c.isTrigger && !IsWeaponCollider(c))
                 return c;
         }
         return null;
+    }
+
+    // Armas (AttackCollider, HitBox...): se mueven con la animación y nunca son el cuerpo, aunque no sean trigger.
+    private static bool IsWeaponCollider(Collider2D c)
+    {
+        string n = c.gameObject.name;
+        return n.IndexOf("Attack", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+               n.IndexOf("HitBox", System.StringComparison.OrdinalIgnoreCase) >= 0;
     }
 
     public static Vector2 GetBodyCenter(Transform t)
@@ -353,7 +368,7 @@ public class AttackState : States<TroopController>, ITroopAttack
         Collider2D[] colliders = t.GetComponentsInChildren<Collider2D>();
         foreach (Collider2D c in colliders)
         {
-            if (c.enabled && !c.isTrigger)
+            if (c.enabled && !c.isTrigger && !IsWeaponCollider(c))
                 return c.bounds.center;
         }
         return t.position;
